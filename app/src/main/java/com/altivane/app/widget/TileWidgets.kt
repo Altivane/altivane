@@ -89,13 +89,14 @@ object WidgetSnapshot {
 /** 单指标小卡（2x1 起步，可拉伸）：黑白主题 */
 abstract class TileWidget : AppWidgetProvider() {
 
-    abstract val label: String
+    abstract val labelRes: Int
     abstract val bright: Int
     abstract val deep: Int
     abstract fun value(s: LiveState): String
 
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
         val t = widgetTheme(ctx)
+        val label = ctx.getString(labelRes)
         for (id in ids) mgr.updateAppWidget(id, build(ctx, label, "--", accentColor(t, bright, deep), t))
     }
 
@@ -124,28 +125,28 @@ abstract class TileWidget : AppWidgetProvider() {
 }
 
 class SpeedTile : TileWidget() {
-    override val label = "时速 km/h"
+    override val labelRes = com.altivane.app.R.string.tile_speed
     override val bright = 0xFF40E0FF.toInt()
     override val deep = 0xFF0E7490.toInt()
     override fun value(s: LiveState) = "%.1f".format(s.speedKmh)
 }
 
 class HrTile : TileWidget() {
-    override val label = "心率 bpm"
+    override val labelRes = com.altivane.app.R.string.tile_hr
     override val bright = 0xFFFF6B8A.toInt()
     override val deep = 0xFFBE123C.toInt()
     override fun value(s: LiveState) = if (s.hr > 0) s.hr.toString() else "--"
 }
 
 class DistanceTile : TileWidget() {
-    override val label = "里程 km"
+    override val labelRes = com.altivane.app.R.string.tile_dist
     override val bright = 0xFF5B9DFF.toInt()
     override val deep = 0xFF0369A1.toInt()
     override fun value(s: LiveState) = "%.2f".format(s.distanceM / 1000.0)
 }
 
 class CalsTile : TileWidget() {
-    override val label = "消耗 kcal"
+    override val labelRes = com.altivane.app.R.string.tile_cals
     override val bright = 0xFFFF9F45.toInt()
     override val deep = 0xFFB45309.toInt()
     override fun value(s: LiveState) = s.kcal.toInt().toString()
@@ -183,14 +184,14 @@ class MainSummaryWidget : AppWidgetProvider() {
                     rv.setInt(R.id.wRoot, "setBackgroundResource", t.bgRes)
                     rv.setTextViewText(R.id.wValue, snap.speed)
                     rv.setTextColor(R.id.wValue, accentColor(t, 0xFF40E0FF.toInt(), 0xFF0E7490.toInt()))
-                    rv.setTextViewText(R.id.wLabel, "时速 km/h")
+                    rv.setTextViewText(R.id.wLabel, ctx.getString(com.altivane.app.R.string.tile_speed))
                     rv.setTextColor(R.id.wLabel, t.labelColor)
                     rv
                 }
                 minW < 330 -> {   // 2x2：双排四指标
                     val rv = RemoteViews(ctx.packageName, R.layout.widget_grid)
                     rv.setInt(R.id.wRoot, "setBackgroundResource", t.bgRes)
-                    rv.setTextViewText(R.id.wmTitle, "Altivane · 运动")
+                    rv.setTextViewText(R.id.wmTitle, ctx.getString(com.altivane.app.R.string.wm_title))
                     rv.setTextColor(R.id.wmTitle, t.labelColor)
                     rv.setTextViewText(R.id.wmV1, snap.speed)
                     rv.setTextColor(R.id.wmV1, accentColor(t, 0xFF40E0FF.toInt(), 0xFF0E7490.toInt()))
@@ -208,7 +209,7 @@ class MainSummaryWidget : AppWidgetProvider() {
                 else -> {         // 4x2：单排四指标
                     val rv = RemoteViews(ctx.packageName, R.layout.widget_main)
                     rv.setInt(R.id.wRoot, "setBackgroundResource", t.bgRes)
-                    rv.setTextViewText(R.id.wmTitle, "Altivane · 运动")
+                    rv.setTextViewText(R.id.wmTitle, ctx.getString(com.altivane.app.R.string.wm_title))
                     rv.setTextColor(R.id.wmTitle, t.labelColor)
                     rv.setTextViewText(R.id.wmV1, snap.speed)
                     rv.setTextColor(R.id.wmV1, accentColor(t, 0xFF40E0FF.toInt(), 0xFF0E7490.toInt()))
@@ -258,13 +259,13 @@ object WidgetPush {
         val mgr = AppWidgetManager.getInstance(ctx) ?: return
         val t = widgetTheme(ctx)
         val tiles = listOf(
-            Triple(SpeedTile::class.java, "时速 km/h", snap.speed) to
+            Triple(SpeedTile::class.java, ctx.getString(com.altivane.app.R.string.tile_speed), snap.speed) to
                     accentColor(t, 0xFF40E0FF.toInt(), 0xFF0E7490.toInt()),
-            Triple(HrTile::class.java, "心率 bpm", snap.hr) to
+            Triple(HrTile::class.java, ctx.getString(com.altivane.app.R.string.tile_hr), snap.hr) to
                     accentColor(t, 0xFFFF6B8A.toInt(), 0xFFBE123C.toInt()),
-            Triple(DistanceTile::class.java, "里程 km", snap.dist) to
+            Triple(DistanceTile::class.java, ctx.getString(com.altivane.app.R.string.tile_dist), snap.dist) to
                     accentColor(t, 0xFF5B9DFF.toInt(), 0xFF0369A1.toInt()),
-            Triple(CalsTile::class.java, "消耗 kcal", snap.cals) to
+            Triple(CalsTile::class.java, ctx.getString(com.altivane.app.R.string.tile_cals), snap.cals) to
                     accentColor(t, 0xFFFF9F45.toInt(), 0xFFB45309.toInt())
         )
         for ((data, color) in tiles) {

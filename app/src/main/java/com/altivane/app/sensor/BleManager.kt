@@ -40,8 +40,10 @@ data class SavedDevice(
 )
 
 /** 常用外设类型（按名称启发式 + 广播服务综合判断） */
-enum class DevKind(val label: String) {
-    BAND("手环"), WATCH("手表"), HR_BELT("心率带"), CADENCE("踏频器"), OTHER("外设")
+enum class DevKind(val labelRes: Int) {
+    BAND(com.altivane.app.R.string.dev_band), WATCH(com.altivane.app.R.string.dev_watch),
+    HR_BELT(com.altivane.app.R.string.dev_hr_belt), CADENCE(com.altivane.app.R.string.dev_cadence),
+    OTHER(com.altivane.app.R.string.dev_other)
 }
 
 /** 识别设备类型：名称关键词优先，服务类型兜底 */

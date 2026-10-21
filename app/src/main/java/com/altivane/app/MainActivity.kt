@@ -61,6 +61,11 @@ import java.io.File
 
 class MainActivity : ComponentActivity() {
 
+    /** 应用内语言包装（设置页切换后 recreate 生效） */
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.altivane.app.domain.AppLang.wrap(newBase))
+    }
+
     private lateinit var permLauncher: ActivityResultLauncher<Array<String>>
     private var pendingPhoto: File? = null
     private var pendingAvatar: File? = null
@@ -80,13 +85,13 @@ class MainActivity : ComponentActivity() {
                     stampPhoto(f, place)
                     val hhmm = java.text.SimpleDateFormat("HH:mm", java.util.Locale.CHINA)
                         .format(java.util.Date(System.currentTimeMillis()))
-                    app.session.addWaypoint("M", place.ifBlank { "打卡 $hhmm" }, f.absolutePath)
+                    app.session.addWaypoint("M", place.ifBlank { getString(R.string.wp_tag) + " $hhmm" }, f.absolutePath)
                 }
                 reverseGeo(last.lat, last.lon) { finish(it) }
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ finish("") }, 4000)
             } else {
                 stampPhoto(f, "")
-                app.session.addWaypoint("M", "打卡", f.absolutePath)
+                app.session.addWaypoint("M", getString(R.string.wp_tag), f.absolutePath)
             }
         }
     }

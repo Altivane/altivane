@@ -222,7 +222,7 @@ fun CardDetailScreen(
                     val alt = livePt?.ele ?: locFix?.altitude?.takeIf { it != 0.0 }
                     val acc = locFix?.accuracy
                     val shareText = if (lat != null && lon != null)
-                        "我的位置：%.5f, %.5f\n高德地图：https://uri.amap.com/marker?position=%.6f,%.6f&name=我的位置\nGoogle Maps：https://maps.google.com/?q=%.5f,%.5f"
+                        stringResource(R.string.share_pos_text)
                             .format(lat, lon, lon, lat, lat, lon)
                     else null
 
@@ -243,14 +243,14 @@ fun CardDetailScreen(
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    cardinalName(s.headingDeg),
+                                    cardinalName(s.headingDeg, locCtx),
                                     style = MaterialTheme.typography.titleLarge,
                                     color = AvColors.onColor(accent)
                                 )
                                 Text(
                                     buildString {
-                                        if (s.hasCompass) append("磁力计实时") else append("等待传感器数据")
-                                        if (s.tiltDeg >= 1f) append(" · 倾斜 %.0f°".format(s.tiltDeg))
+                                        if (s.hasCompass) append(stringResource(R.string.compass_status_realtime)) else append(stringResource(R.string.compass_status_wait))
+                                        if (s.tiltDeg >= 1f) append(stringResource(R.string.tilt_fmt, s.tiltDeg))
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -307,7 +307,7 @@ fun CardDetailScreen(
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(
-                                    "开始运动后记录实时轨迹",
+                                    stringResource(R.string.track_empty),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -323,16 +323,16 @@ fun CardDetailScreen(
                         val gain = if (idle && lastRide != null) lastRide!!.elevGainM
                         else remember(chartPts) { elevGainLoss(chartPts.map { it.ele }).first }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TrackStatCell("%.2f".format(km), "km · 里程", null, Modifier.weight(1f))
-                            TrackStatCell(Coach.fmtDur(dur), "时长", null, Modifier.weight(1f))
+                            TrackStatCell("%.2f".format(km), stringResource(R.string.unit_km_dist), null, Modifier.weight(1f))
+                            TrackStatCell(Coach.fmtDur(dur), stringResource(R.string.card_duration), null, Modifier.weight(1f))
                             TrackStatCell(
                                 if (s.sport == SportType.RIDE) "%.1f".format(
                                     if (dur > 0) km / (dur / 3600000.0) else 0.0
                                 ) else Coach.paceText(if (dur > 0 && km > 0) dur / 60000.0 / km else 0.0),
-                                if (s.sport == SportType.RIDE) "km/h · 均速" else "min/km · 配速",
+                                if (s.sport == SportType.RIDE) stringResource(R.string.unit_avg_kmh) else stringResource(R.string.unit_pace_minkm),
                                 null, Modifier.weight(1f)
                             )
-                            TrackStatCell("%.0f".format(gain), "m · 爬升", AvColors.orange, Modifier.weight(1f))
+                            TrackStatCell("%.0f".format(gain), stringResource(R.string.unit_m_climb), AvColors.orange, Modifier.weight(1f))
                         }
 
                         // ③ 打卡行：照片缩略（最多 3 张）+ 最新打卡信息 pill
@@ -367,7 +367,7 @@ fun CardDetailScreen(
                                             )
                                         } else {
                                             Text(
-                                                "打卡", style = MaterialTheme.typography.labelSmall,
+                                                stringResource(R.string.wp_tag), style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
@@ -385,7 +385,7 @@ fun CardDetailScreen(
                                 ) {
                                     Column {
                                         Text(
-                                            "${lastWp.label} · 打卡",
+                                            stringResource(R.string.wp_last_fmt, lastWp.label),
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onBackground,
@@ -393,7 +393,7 @@ fun CardDetailScreen(
                                         )
                                         Text(
                                             java.text.SimpleDateFormat("HH:mm", java.util.Locale.CHINA)
-                                                .format(java.util.Date(lastWp.t)) + " · 共 ${lastWps.size} 个",
+                                                .format(java.util.Date(lastWp.t)) + stringResource(R.string.wp_count_fmt, lastWps.size),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -422,7 +422,7 @@ fun CardDetailScreen(
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        "生成分享图",
+                                        stringResource(R.string.btn_share_image),
                                         style = MaterialTheme.typography.titleMedium,
                                         color = Color(0xFF0D1117)
                                     )
@@ -452,7 +452,7 @@ fun CardDetailScreen(
                             )
                         } else {
                             Text(
-                                "开始运动后记录海拔剖面",
+                                stringResource(R.string.profile_empty),
                                 Modifier.align(Alignment.Center),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -483,17 +483,17 @@ fun CardDetailScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         val value = when {
-                            type == CardType.HR -> (if (liveHr > 0) liveHr.toString() else "--") to "次/分"
+                            type == CardType.HR -> (if (liveHr > 0) liveHr.toString() else "--") to stringResource(R.string.ble_bpm)
                             type == CardType.CAD -> (if (liveCad >= 0) liveCad.toString() else "--") to "rpm"
                             // 气压计常开：空闲态也显示实时气压（纯 hPa，不回退 GPS 海拔）
                             type == CardType.BARO -> when {
-                                !s.hasBaro -> "--" to "设备无气压计"
+                                !s.hasBaro -> "--" to stringResource(R.string.no_baro)
                                 s.pressureHpa > 0 -> "%.1f".format(s.pressureHpa) to "hPa"
                                 pressS.isNotEmpty() -> "%.1f".format(pressS.last().v) to "hPa"
                                 else -> "--" to "hPa"
                             }
-                            idle -> lastValueOf(type, lastRide)
-                            else -> valueOf(type, s)
+                            idle -> lastValueOf(type, lastRide, locCtx)
+                            else -> valueOf(type, s, locCtx)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
@@ -517,10 +517,10 @@ fun CardDetailScreen(
                     // ④ 深度分析（心率区间 / 每公里配速 / 强度分段 / 移动占比 / 天气趋势）
                     DetailAnalysis(type, chartPts, idle, hrS, pressS, s, lastRide)
                     // ⑤ 指标说明（气压卡说明已在天气趋势卡中，不再重复小字）
-                    if (cardDesc(type).isNotEmpty()) {
+                    if (cardDesc(type, locCtx).isNotEmpty()) {
                         GlassCard(accent = accent.copy(alpha = 0.5f)) {
                             Text(
-                                cardDesc(type),
+                                cardDesc(type, locCtx),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -545,7 +545,7 @@ fun CardDetailScreen(
                 if (bmp != null) {
                     Image(bmp, null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                 } else {
-                    Text("加载中…", color = Color.White)
+                    Text(stringResource(R.string.loading), color = Color.White)
                 }
             }
         }
@@ -554,12 +554,12 @@ fun CardDetailScreen(
 
 // ---------- 详情页丰富信息：趋势图 / 统计摘要 / 深度分析 ----------
 
-private fun fmtChartVal(type: CardType, v: Double): String = when (type) {
-    CardType.HR -> "${v.toInt()} 次/分"
+private fun fmtChartVal(type: CardType, v: Double, ctx: android.content.Context): String = when (type) {
+    CardType.HR -> ctx.getString(R.string.fmt_bpm_val, v.toInt())
     CardType.PACE, CardType.MAX_SPEED -> "%.1f km/h".format(v)
     CardType.CAD -> "${v.toInt()} rpm"
     CardType.DISTANCE -> "%.2f km".format(v)
-    CardType.DURATION -> "${v.toInt()} 分"
+    CardType.DURATION -> ctx.getString(R.string.fmt_min_val, v.toInt())
     CardType.BARO -> "%.1f hPa".format(v)
     CardType.ALTITUDE -> "%.0f m".format(v)
     else -> "%.1f".format(v)
@@ -570,9 +570,10 @@ private fun fmtChartVal(type: CardType, v: Double): String = when (type) {
 private fun DetailChartCard(
     type: CardType, chart: CardChart, accent: Color, pts: List<RidePoint>
 ) {
+    val ctx = LocalContext.current
     GlassCard(Modifier.height(190.dp), accent = accent) {
         Column(Modifier.fillMaxSize()) {
-            CardTitleRow("趋势", accent)
+            CardTitleRow(stringResource(R.string.trend_title), accent)
             Spacer(Modifier.height(4.dp))
             Box(Modifier.weight(1f)) {
                 CardChartView(chart, Modifier.fillMaxSize(), accent)
@@ -582,13 +583,13 @@ private fun DetailChartCard(
                         chart.kind != ChartKind.HOURLY_BARS && chart.kind != ChartKind.MOVE_REST
                 if (showTicks && chart.series.size >= 2) {
                     Text(
-                        "峰 ${fmtChartVal(type, chart.series.max())}",
+                        stringResource(R.string.peak_fmt, fmtChartVal(type, chart.series.max(), ctx)),
                         Modifier.align(Alignment.TopEnd),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "低 ${fmtChartVal(type, chart.series.min())}",
+                        stringResource(R.string.low_fmt, fmtChartVal(type, chart.series.min(), ctx)),
                         Modifier.align(Alignment.TopStart),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -668,27 +669,27 @@ private fun DetailSummary(
 
     val items: List<Pair<String, String>> = when (type) {
         CardType.HR -> listOf(
-            "当前" to (if (idle) (hrs.lastOrNull()?.toString() ?: "--") else (if (s.hr > 0) s.hr.toString() else "--")),
-            "平均" to (if (hrs.isNotEmpty()) "${hrs.average().toInt()} 次/分" else "--"),
-            "峰值" to (if (hrs.isNotEmpty()) "${hrs.max()} 次/分" else "--")
+            stringResource(R.string.lbl_current) to (if (idle) (hrs.lastOrNull()?.toString() ?: "--") else (if (s.hr > 0) s.hr.toString() else "--")),
+            stringResource(R.string.lbl_avg) to (if (hrs.isNotEmpty()) "${hrs.average().toInt()} ${stringResource(R.string.ble_bpm)}" else "--"),
+            stringResource(R.string.lbl_peak) to (if (hrs.isNotEmpty()) "${hrs.max()} ${stringResource(R.string.ble_bpm)}" else "--")
         )
         CardType.PACE -> listOf(
-            "当前" to Coach.paceText(if (idle) 0.0 else s.paceMinPerKm),
-            "均速" to "%.1f km/h".format(avgKmh),
-            "峰值时速" to (if (spd.isNotEmpty()) "%.1f km/h".format(spd.max()) else "--"),
-            "最快公里" to (fastest?.let { Coach.paceText(it) } ?: "--")
+            stringResource(R.string.lbl_current) to Coach.paceText(if (idle) 0.0 else s.paceMinPerKm),
+            stringResource(R.string.lbl_avg_speed) to "%.1f km/h".format(avgKmh),
+            stringResource(R.string.lbl_peak_speed) to (if (spd.isNotEmpty()) "%.1f km/h".format(spd.max()) else "--"),
+            stringResource(R.string.lbl_fastest_km) to (fastest?.let { Coach.paceText(it) } ?: "--")
         )
         CardType.DISTANCE -> {
             // 步数换算仅徒步有意义（骑行不显示）：成人通用步长 0.72 m 估算
             val sportName = if (idle) ride?.sportType ?: "HIKE" else s.sport.name
             val base = listOf(
-                "里程" to "%.2f km".format(totalKm),
-                "均速" to "%.1f km/h".format(avgKmh),
-                "移动" to Coach.fmtDur(movingMs)
+                stringResource(R.string.card_distance) to "%.2f km".format(totalKm),
+                stringResource(R.string.lbl_avg_speed) to "%.1f km/h".format(avgKmh),
+                stringResource(R.string.lbl_moving) to Coach.fmtDur(movingMs)
             )
             if (sportName != "RIDE") base + (
-                "步数" to (
-                    if (totalKm > 0.05) "%d 步".format((totalKm * 1000 / 0.72).toInt()) else "--"
+                stringResource(R.string.lbl_steps) to (
+                    if (totalKm > 0.05) stringResource(R.string.unit_steps_fmt, (totalKm * 1000 / 0.72).toInt()) else "--"
                     )
                 )
             else base
@@ -697,39 +698,39 @@ private fun DetailSummary(
             val total = if (pts.size >= 2) pts.last().t - pts.first().t else 0L
             val rest = (total - movingMs).coerceAtLeast(0)
             listOf(
-                "移动" to Coach.fmtDur(movingMs),
-                "停留" to Coach.fmtDur(rest),
-                "占比" to (if (total > 0) "${(movingMs * 100 / total)}%" else "--")
+                stringResource(R.string.lbl_moving) to Coach.fmtDur(movingMs),
+                stringResource(R.string.lbl_stay) to Coach.fmtDur(rest),
+                stringResource(R.string.lbl_ratio) to (if (total > 0) "${(movingMs * 100 / total)}%" else "--")
             )
         }
         CardType.CAD -> listOf(
-            "当前" to (if (idle) (cads.lastOrNull()?.toString() ?: "--") else s.cad.toString()),
-            "平均" to (if (cads.isNotEmpty()) "${cads.average().toInt()} rpm" else "--"),
-            "峰值" to (if (cads.isNotEmpty()) "${cads.max()} rpm" else "--")
+            stringResource(R.string.lbl_current) to (if (idle) (cads.lastOrNull()?.toString() ?: "--") else s.cad.toString()),
+            stringResource(R.string.lbl_avg) to (if (cads.isNotEmpty()) "${cads.average().toInt()} rpm" else "--"),
+            stringResource(R.string.lbl_peak) to (if (cads.isNotEmpty()) "${cads.max()} rpm" else "--")
         )
         CardType.CALS -> listOf(
-            "总消耗" to "${kcal.toInt()} kcal",
-            "每公里" to (if (totalKm > 0.2) "${(kcal / totalKm).toInt()} kcal" else "--"),
-            "时长" to Coach.fmtDur(movingMs)
+            stringResource(R.string.lbl_total_cals) to "${kcal.toInt()} kcal",
+            stringResource(R.string.lbl_per_km) to (if (totalKm > 0.2) "${(kcal / totalKm).toInt()} kcal" else "--"),
+            stringResource(R.string.card_duration) to Coach.fmtDur(movingMs)
         )
         CardType.MAX_SPEED -> listOf(
-            "峰值" to "%.1f km/h".format(if (idle) (ride?.maxKmh ?: 0.0) else s.maxKmh),
-            "平均" to (if (spd.isNotEmpty()) "%.1f km/h".format(spd.average()) else "--"),
-            "里程" to "%.2f km".format(totalKm)
+            stringResource(R.string.lbl_peak) to "%.1f km/h".format(if (idle) (ride?.maxKmh ?: 0.0) else s.maxKmh),
+            stringResource(R.string.lbl_avg) to (if (spd.isNotEmpty()) "%.1f km/h".format(spd.average()) else "--"),
+            stringResource(R.string.card_distance) to "%.2f km".format(totalKm)
         )
         // 气压卡：只显示气压数据（hPa），海拔统计归高度卡；无气压计不渲染统计行
         CardType.BARO -> if (!s.hasBaro) emptyList() else listOf(
-            "当前" to (if (s.pressureHpa > 0) "%.1f hPa".format(s.pressureHpa) else "--"),
-            "最高" to (if (pressVals.isNotEmpty()) "%.1f hPa".format(pressVals.max()) else "--"),
-            "最低" to (if (pressVals.isNotEmpty()) "%.1f hPa".format(pressVals.min()) else "--")
+            stringResource(R.string.lbl_current) to (if (s.pressureHpa > 0) "%.1f hPa".format(s.pressureHpa) else "--"),
+            stringResource(R.string.lbl_max) to (if (pressVals.isNotEmpty()) "%.1f hPa".format(pressVals.max()) else "--"),
+            stringResource(R.string.lbl_min) to (if (pressVals.isNotEmpty()) "%.1f hPa".format(pressVals.min()) else "--")
         )
         // 高度卡：海拔 / 相对起点爬升 / 本次最高
         CardType.ALTITUDE -> listOf(
-            "当前" to (if (!idle && s.altBaroM != 0.0) "%.0f m".format(s.altBaroM)
+            stringResource(R.string.lbl_current) to (if (!idle && s.altBaroM != 0.0) "%.0f m".format(s.altBaroM)
             else if (!idle && s.relAltM != 0.0) "%.0f m".format(s.relAltM)
             else if (idle && ride != null) "%.0f m".format(ride.maxAltM) else "--"),
-            "相对起点" to (if (!idle && s.baseAltSet) "%+.0f m".format(s.relAltM) else "--"),
-            "累计爬升" to (if (idle && ride != null) "%.0f m".format(ride.elevGainM) else "%.0f m".format(s.elevGainM))
+            stringResource(R.string.lbl_rel_start) to (if (!idle && s.baseAltSet) "%+.0f m".format(s.relAltM) else "--"),
+            stringResource(R.string.lbl_total_climb) to (if (idle && ride != null) "%.0f m".format(ride.elevGainM) else "%.0f m".format(s.elevGainM))
         )
         else -> emptyList()
     }
@@ -782,16 +783,16 @@ private fun DetailAnalysis(
 private fun NoBaroCard() {
     GlassCard(accent = AvColors.violet.copy(alpha = 0.5f)) {
         Column {
-            CardTitleRow("天气趋势（气压判读）", AvColors.violet)
+            CardTitleRow(stringResource(R.string.weather_title), AvColors.violet)
             Spacer(Modifier.height(8.dp))
             Text(
-                "此设备没有气压传感器，气压卡与天气趋势不可用",
+                stringResource(R.string.weather_na),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "其余功能（GPS 轨迹 / 心率 / 踏频等）不受影响",
+                stringResource(R.string.weather_rest),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -809,25 +810,25 @@ private fun WeatherTrendCard(liveHpa: Float, pressList: List<TimedValF>) {
     val ref = vals.firstOrNull() ?: now
     val d3 = now - ref
     val level = when {
-        now >= 1020.0 -> Triple("高压 · 晴好稳定", AvColors.green,
-            "气压 ≥1020 hPa，高压系统控制，天气晴朗稳定，适合出行")
-        now >= 1000.0 -> Triple("常压 · 天气多变", AvColors.yellow,
-            "气压 1000~1020 hPa，处于常见区间，关注云量与风的变化")
-        else -> Triple("低压 · 阴雨概率大", AvColors.red,
-            "气压 ≤1000 hPa，低压系统影响，阴雨/大风概率显著上升")
+        now >= 1020.0 -> Triple(stringResource(R.string.wx_hi_t), AvColors.green,
+            stringResource(R.string.wx_hi_d))
+        now >= 1000.0 -> Triple(stringResource(R.string.wx_mid_t), AvColors.yellow,
+            stringResource(R.string.wx_mid_d))
+        else -> Triple(stringResource(R.string.wx_lo_t), AvColors.red,
+            stringResource(R.string.wx_lo_d))
     }
     val trend = when {
-        d3 <= -1.5 -> Triple("▼ 气压骤降 %.1f hPa".format(d3), AvColors.red,
-            "3 小时内下降超 1.5 hPa，天气即将转坏，注意防风防雨")
-        d3 <= -0.8 -> Triple("↘ 缓慢下降 %.1f hPa".format(d3), AvColors.orange,
-            "气压走低，天气趋于不稳定")
-        d3 >= 1.5 -> Triple("▲ 气压回升 %.1f hPa".format(d3), AvColors.green,
-            "气压持续回升，天气趋于好转")
+        d3 <= -1.5 -> Triple(stringResource(R.string.wx_drop_fast_t, d3), AvColors.red,
+            stringResource(R.string.wx_drop_fast_d))
+        d3 <= -0.8 -> Triple(stringResource(R.string.wx_drop_slow_t, d3), AvColors.orange,
+            stringResource(R.string.wx_drop_slow_d))
+        d3 >= 1.5 -> Triple(stringResource(R.string.wx_rise_t, d3), AvColors.green,
+            stringResource(R.string.wx_rise_d))
         else -> null
     }
     GlassCard(accent = AvColors.violet.copy(alpha = 0.5f)) {
         Column {
-            CardTitleRow("天气趋势（气压判读）", AvColors.violet)
+            CardTitleRow(stringResource(R.string.weather_title), AvColors.violet)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(9.dp).clip(CircleShape).background(level.second))
@@ -855,15 +856,15 @@ private fun WeatherTrendCard(liveHpa: Float, pressList: List<TimedValF>) {
             }
             Spacer(Modifier.height(10.dp))
             // 常见气压规格速查
-            Text("常见气压规格", style = MaterialTheme.typography.labelMedium,
+            Text(stringResource(R.string.spec_title), style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
             listOf(
-                "1026" to "强高压 · 干冷晴朗（冬季寒潮）",
-                "1013.25" to "海平面标准大气压（ISA 基准）",
-                "1000" to "一般低压 · 多云阵雨",
-                "980" to "温带气旋 · 大风降雨",
-                "950" to "强台风外围 · 恶劣天气"
+                "1026" to stringResource(R.string.spec_1026),
+                "1013.25" to stringResource(R.string.spec_1013),
+                "1000" to stringResource(R.string.spec_1000),
+                "980" to stringResource(R.string.spec_980),
+                "950" to stringResource(R.string.spec_950)
             ).forEach { (v, d) ->
                 Row(Modifier.padding(vertical = 2.dp)) {
                     Text("${v} hPa", Modifier.width(86.dp),
@@ -882,15 +883,18 @@ private fun WeatherTrendCard(liveHpa: Float, pressList: List<TimedValF>) {
 fun ZoneBarsCard(pts: List<RidePoint>) {
     val zones = remember(pts) { RideStats.zoneSeconds(pts) }
     val total = zones.sum()
-    val names = listOf("Z1 恢复", "Z2 轻松", "Z3 有氧", "Z4 乳酸", "Z5 极限")
+    val names = listOf(
+        stringResource(R.string.zone_z1), stringResource(R.string.zone_z2), stringResource(R.string.zone_z3),
+        stringResource(R.string.zone_z4), stringResource(R.string.zone_z5)
+    )
     val colors = listOf(AvColors.blue, AvColors.green, AvColors.yellow, AvColors.orange, AvColors.red)
     GlassCard(accent = AvColors.pink.copy(alpha = 0.5f)) {
         Column {
-            CardTitleRow("心率区间分布", AvColors.pink)
+            CardTitleRow(stringResource(R.string.hr_zones_title), AvColors.pink)
             Spacer(Modifier.height(8.dp))
             if (total <= 0) {
                 Text(
-                    "连接心率带并开始运动后，按 Z1~Z5 统计各区间时长占比",
+                    stringResource(R.string.hr_zones_empty),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -944,7 +948,7 @@ private fun KmPaceCard(pts: List<RidePoint>) {
     val fastestIdx = paces.indices.minBy { paces[it] }
     GlassCard(accent = AvColors.yellow.copy(alpha = 0.5f)) {
         Column {
-            CardTitleRow("每公里配速", AvColors.yellow)
+            CardTitleRow(stringResource(R.string.pace_title), AvColors.yellow)
             Spacer(Modifier.height(6.dp))
             paces.take(12).forEachIndexed { i, p ->
                 Row(
@@ -952,7 +956,7 @@ private fun KmPaceCard(pts: List<RidePoint>) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "第 ${i + 1} 公里",
+                        stringResource(R.string.km_fmt, i + 1),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)
@@ -967,7 +971,7 @@ private fun KmPaceCard(pts: List<RidePoint>) {
             }
             if (paces.size > 12) {
                 Text(
-                    "…共 ${paces.size} 公里",
+                    stringResource(R.string.km_total_fmt, paces.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -982,11 +986,13 @@ private fun EnergyBreakdownCard(pts: List<RidePoint>) {
     val split = remember(pts) { RideStats.kcalSplit(pts, pts.firstOrNull()?.let { SportType.HIKE } ?: SportType.HIKE) }
     val total = split.sum()
     if (total <= 0.0) return
-    val names = listOf("低强度", "中强度", "高强度")
+    val names = listOf(
+        stringResource(R.string.int_low), stringResource(R.string.int_mid), stringResource(R.string.int_high)
+    )
     val colors = listOf(AvColors.cyan, AvColors.yellow, AvColors.orange)
     GlassCard(accent = AvColors.orange.copy(alpha = 0.5f)) {
         Column {
-            CardTitleRow("强度分段消耗", AvColors.orange)
+            CardTitleRow(stringResource(R.string.intensity_title), AvColors.orange)
             Spacer(Modifier.height(8.dp))
             split.forEachIndexed { i, v ->
                 Row(
@@ -1031,7 +1037,7 @@ private fun MovingRatioCard(pts: List<RidePoint>, idle: Boolean) {
     val mp = moving * 100f / total
     GlassCard(accent = AvColors.cyan.copy(alpha = 0.5f)) {
         Column {
-            CardTitleRow("移动 / 停留", AvColors.cyan)
+            CardTitleRow(stringResource(R.string.move_stay_title), AvColors.cyan)
             Spacer(Modifier.height(8.dp))
             Row(
                 Modifier.fillMaxWidth().height(12.dp),
@@ -1051,13 +1057,13 @@ private fun MovingRatioCard(pts: List<RidePoint>, idle: Boolean) {
             Spacer(Modifier.height(6.dp))
             Row(Modifier.fillMaxWidth()) {
                 Text(
-                    "● 移动 ${Coach.fmtDur(moving)}",
+                    stringResource(R.string.move_fmt, Coach.fmtDur(moving)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    "● 停留 ${Coach.fmtDur(rest)}",
+                    stringResource(R.string.stay_fmt, Coach.fmtDur(rest)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1076,28 +1082,28 @@ private fun trackKm(pts: List<RidePoint>): Double {
     return acc / 1000.0
 }
 
-private fun valueOf(t: CardType, s: LiveState): Pair<String, String> = when (t) {
+private fun valueOf(t: CardType, s: LiveState, ctx: android.content.Context): Pair<String, String> = when (t) {
     CardType.DISTANCE -> "%.2f".format(s.distanceM / 1000.0) to "km"
     CardType.DURATION -> Coach.fmtDur(s.movingMs) to ""
     CardType.PACE -> Coach.paceText(s.paceMinPerKm) to "min/km"
-    CardType.HR -> (if (s.hr > 0) s.hr.toString() else "--") to "次/分"
+    CardType.HR -> (if (s.hr > 0) s.hr.toString() else "--") to ctx.getString(R.string.ble_bpm)
     CardType.CAD -> (if (s.cad >= 0) s.cad.toString() else "--") to "rpm"
     CardType.CALS -> s.kcal.toInt().toString() to "kcal"
     CardType.MAX_SPEED -> "%.1f".format(s.maxKmh) to "km/h"
-    CardType.COMPASS -> "%.0f".format(s.headingDeg) to "航向"
+    CardType.COMPASS -> "%.0f".format(s.headingDeg) to ctx.getString(R.string.lbl_heading)
     CardType.BARO -> when {
-        !s.hasBaro -> "--" to "设备无气压计"
+        !s.hasBaro -> "--" to ctx.getString(R.string.no_baro)
         s.pressureHpa > 0 -> "%.1f".format(s.pressureHpa) to "hPa"
         else -> "--" to "hPa"
     }
     CardType.ALTITUDE -> when (s.sport) {
         SportType.HIKE -> when {
-            s.altBaroM != 0.0 -> "%.0f".format(s.altBaroM) to "m 海拔"
-            s.altM > 0.0 -> "%.0f".format(s.altM) to "m（GPS）"
+            s.altBaroM != 0.0 -> "%.0f".format(s.altBaroM) to ctx.getString(R.string.unit_m_alt)
+            s.altM > 0.0 -> "%.0f".format(s.altM) to "m GPS"
             else -> "--" to ""
         }
         SportType.RIDE -> when {
-            s.baseAltSet -> "%.0f".format(s.relAltM) to "m 相对"
+            s.baseAltSet -> "%.0f".format(s.relAltM) to ctx.getString(R.string.unit_m_rel)
             else -> "--" to ""
         }
     }
@@ -1105,48 +1111,50 @@ private fun valueOf(t: CardType, s: LiveState): Pair<String, String> = when (t) 
     CardType.PROFILE -> "" to ""
 }
 
-private fun lastValueOf(t: CardType, r: RideEntity?): Pair<String, String> {
-    if (r == null) return "--" to "暂无运动记录"
+private fun lastValueOf(t: CardType, r: RideEntity?, ctx: android.content.Context): Pair<String, String> {
+    if (r == null) return "--" to ctx.getString(R.string.last_ride_none)
     return when (t) {
-        CardType.DISTANCE -> "%.2f".format(r.distanceM / 1000.0) to "km（上次）"
-        CardType.DURATION -> Coach.fmtDur(r.movingS * 1000L) to "（上次）"
-        CardType.PACE -> if (r.avgKmh > 0.1) Coach.paceText(60.0 / r.avgKmh) to "min/km（平均）"
+        CardType.DISTANCE -> "%.2f".format(r.distanceM / 1000.0) to ctx.getString(R.string.unit_km_last)
+        CardType.DURATION -> Coach.fmtDur(r.movingS * 1000L) to ctx.getString(R.string.unit_last)
+        CardType.PACE -> if (r.avgKmh > 0.1) Coach.paceText(60.0 / r.avgKmh) to ctx.getString(R.string.unit_pace_avg)
         else "--" to ""
-        CardType.HR -> "--" to "实时心率见上方图表"
-        CardType.CAD -> "--" to "实时踏频见上方图表"
-        CardType.CALS -> r.kcal.toInt().toString() to "kcal（上次）"
-        CardType.MAX_SPEED -> "%.1f".format(r.maxKmh) to "km/h（上次）"
-        CardType.COMPASS -> "--" to "航向实时可见"
-        CardType.BARO -> "--" to "实时气压见上方数值"
-        CardType.ALTITUDE -> "%.0f".format(r.maxAltM) to "m（上次最高）"
+        CardType.HR -> "--" to ctx.getString(R.string.hr_hint_live)
+        CardType.CAD -> "--" to ctx.getString(R.string.cad_hint_live)
+        CardType.CALS -> r.kcal.toInt().toString() to ctx.getString(R.string.unit_kcal_last)
+        CardType.MAX_SPEED -> "%.1f".format(r.maxKmh) to ctx.getString(R.string.unit_kmh_last)
+        CardType.COMPASS -> "--" to ctx.getString(R.string.compass_hint_live)
+        CardType.BARO -> "--" to ctx.getString(R.string.baro_hint_live)
+        CardType.ALTITUDE -> "%.0f".format(r.maxAltM) to ctx.getString(R.string.unit_m_lastmax)
         CardType.TRACK -> "" to ""
         CardType.PROFILE -> "" to ""
     }
 }
 
-private fun cardDesc(t: CardType): String = when (t) {
-    CardType.DISTANCE -> "累计里程：GPS 逐点累加（Haversine 球面距离）；步数 = 里程 ÷ 0.72 m（成人通用步长估算，仅徒步）"
-    CardType.DURATION -> "移动时间：速度低于 2.5 km/h 的停留不计入"
-    CardType.PACE -> "配速 = 每公里用时。跑步/徒步核心指标，实时按当前速度换算"
-    CardType.HR -> "实时心率（BLE 0x2A37 标准协议）。超过最大心率 90% 自动语音预警降速"
-    CardType.CAD -> "踏频（BLE CSC 0x2A5B 协议）：每分钟曲柄圈数，含回绕与停踩处理"
-    CardType.CALS -> "实时消耗：有心率用 Keytel 公式，无心率按 MET 分桶估算"
-    CardType.MAX_SPEED -> "本次运动最高瞬时速度（GPS 多普勒）"
-    CardType.COMPASS -> "磁力计航向：红针指北、蓝针指南；下方附经纬度、SOS 求救闪光（三短三长三短）与一键位置分享"
+private fun cardDesc(t: CardType, ctx: android.content.Context): String = when (t) {
+    CardType.DISTANCE -> ctx.getString(R.string.hint_distance)
+    CardType.DURATION -> ctx.getString(R.string.hint_duration)
+    CardType.PACE -> ctx.getString(R.string.hint_pace)
+    CardType.HR -> ctx.getString(R.string.hint_hr)
+    CardType.CAD -> ctx.getString(R.string.hint_cad)
+    CardType.CALS -> ctx.getString(R.string.hint_cals)
+    CardType.MAX_SPEED -> ctx.getString(R.string.hint_max_speed)
+    CardType.COMPASS -> ctx.getString(R.string.hint_compass)
     CardType.BARO -> ""
-    CardType.ALTITUDE -> "气压计测高（ISA 国际标准大气）：运动开始时以 GPS 海拔校准零点，之后气压灵敏追踪——徒步显示海拔高程，骑行显示相对起点高程；气压 0.1 hPa ≈ 0.8 m"
-    CardType.TRACK -> "实时彩虹轨迹：速度分色，慢=紫蓝、快=红；打卡照片钉在对应位置"
-    CardType.PROFILE -> "海拔剖面：上山下山的高度变化，彩条渐变描边"
+    CardType.ALTITUDE -> ctx.getString(R.string.hint_altitude)
+    CardType.TRACK -> ctx.getString(R.string.hint_track)
+    CardType.PROFILE -> ctx.getString(R.string.hint_profile)
 }
 
-/** 方位名：16 方位（北 / 北偏东 / 东北 …） */
-private fun cardinalName(deg: Float): String {
+/** 方位名：16 方位（N / NNE / NE …），随应用语言 */
+private fun cardinalName(deg: Float, ctx: android.content.Context): String {
     val d = ((deg % 360) + 360) % 360
     val names = listOf(
-        "北", "北偏东", "东北", "东偏北", "东", "东偏南", "东南", "南偏东",
-        "南", "南偏西", "西南", "西偏南", "西", "西偏北", "西北", "北偏西"
+        R.string.dir_0, R.string.dir_1, R.string.dir_2, R.string.dir_3,
+        R.string.dir_4, R.string.dir_5, R.string.dir_6, R.string.dir_7,
+        R.string.dir_8, R.string.dir_9, R.string.dir_10, R.string.dir_11,
+        R.string.dir_12, R.string.dir_13, R.string.dir_14, R.string.dir_15
     )
-    return names[Math.round(d / 22.5f).toInt() % 16]
+    return ctx.getString(names[Math.round(d / 22.5f).toInt() % 16])
 }
 
 /** 缓存定位：读系统最后已知位置（免 GMS） */
@@ -1202,14 +1210,14 @@ private fun ShareLocationCard(
             .glassCard(isDark(), AvColors.cyan)
             .clickable {
                 if (shareText == null) {
-                    Toast.makeText(ctx, "暂无定位，请开启 GPS 后重试", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, ctx.getString(R.string.toast_no_gps), Toast.LENGTH_SHORT).show()
                 } else {
                     val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(android.content.Intent.EXTRA_TEXT, shareText)
                     }
                     ctx.startActivity(
-                        android.content.Intent.createChooser(send, "分享我的位置")
+                        android.content.Intent.createChooser(send, ctx.getString(R.string.share_pos_title))
                     )
                 }
             }
@@ -1218,7 +1226,7 @@ private fun ShareLocationCard(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "分享位置",
+                    stringResource(R.string.btn_share_pos),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -1247,7 +1255,7 @@ private fun ShareLocationCard(
                     maxLines = 1
                 )
                 val subs = buildList {
-                    alt?.let { add("海拔 %.0f m".format(it)) }
+                    alt?.let { add(ctx.getString(R.string.alt_fmt, it)) }
                     acc?.let { add("±%.0f m".format(it)) }
                 }
                 if (subs.isNotEmpty()) {
@@ -1259,7 +1267,7 @@ private fun ShareLocationCard(
                 }
             } else {
                 Text(
-                    "暂无定位，请到空旷处开启 GPS",
+                    stringResource(R.string.no_gps_outdoor),
                     style = MaterialTheme.typography.bodyMedium,
                     color = dim
                 )
@@ -1314,7 +1322,7 @@ private fun SosTorchCard(modifier: Modifier = Modifier) {
             .glassCard(isDark(), if (sos) AvColors.red else null)
             .clickable {
                 if (!hasCam) {
-                    Toast.makeText(ctx, "手电筒需要相机权限，请重新进入应用完成授权", Toast.LENGTH_LONG).show()
+                    Toast.makeText(ctx, ctx.getString(R.string.toast_sos_perm), Toast.LENGTH_LONG).show()
                     (ctx as? com.altivane.app.MainActivity)?.requestPerms()
                 } else if (sos) {
                     sos = false
@@ -1352,7 +1360,7 @@ private fun SosTorchCard(modifier: Modifier = Modifier) {
                 }
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    if (sos) "SOS 闪烁中" else "SOS 手电筒",
+                    if (sos) stringResource(R.string.sos_on) else stringResource(R.string.sos_off),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (sos) AvColors.red else MaterialTheme.colorScheme.onBackground
                 )
@@ -1373,7 +1381,7 @@ private fun SosTorchCard(modifier: Modifier = Modifier) {
                 MorseBars(Modifier.fillMaxWidth().height(34.dp))
             } else {
                 Text(
-                    "点击开手电筒",
+                    stringResource(R.string.btn_torch),
                     style = MaterialTheme.typography.labelSmall,
                     color = dim
                 )
@@ -1433,12 +1441,12 @@ private fun MorseBars(modifier: Modifier = Modifier) {
 @Composable
 private fun SurvivalTipsCard(modifier: Modifier = Modifier) {
     val tips = listOf(
-        "☀️ 太阳辨向：日出东方、日落西方；正午（北半球）太阳在正南，影子最短的一端指向北",
-        "⌚ 手表辨向：时针对准太阳，时针与 12 点方向夹角的平分线即正南（北半球）",
-        "🌟 夜间辨向：沿北斗七星勺口两颗星连线延长约 5 倍距离找到北极星，它永远指正北",
-        "🌲 植被辨向：向阳面（南侧）枝叶更茂密、年轮间距更宽；树皮背阴面多生青苔",
-        "⛰️ 迷路三步：先停下（STOP 原则），回忆最后确定位置的地标；登上制高点观察来路，原路返回最优先",
-        "💧 寻找人烟：沿溪流顺水而下，下游更容易遇到村庄与道路；入夜停止移动，保存体力与手机电量"
+        stringResource(R.string.survive_1),
+        stringResource(R.string.survive_2),
+        stringResource(R.string.survive_3),
+        stringResource(R.string.survive_4),
+        stringResource(R.string.survive_5),
+        stringResource(R.string.survive_6)
     )
     var open by remember { mutableStateOf(false) }
     Box(
@@ -1451,13 +1459,13 @@ private fun SurvivalTipsCard(modifier: Modifier = Modifier) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "🧭 野外辨向 · 迷失生存",
+                    stringResource(R.string.survive_title),
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    if (open) "收起" else "展开",
+                    stringResource(if (open) R.string.collapse else R.string.expand),
                     style = MaterialTheme.typography.labelMedium,
                     color = AvColors.onColor(AvColors.green)
                 )
@@ -1474,7 +1482,7 @@ private fun SurvivalTipsCard(modifier: Modifier = Modifier) {
                 }
             } else {
                 Text(
-                    "太阳 / 手表 / 北极星 / 植被辨向 + 迷路 STOP 三步 · 点击展开",
+                    stringResource(R.string.survive_sub),
                     Modifier.padding(top = 6.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1495,14 +1503,14 @@ private fun ShareLocationCard(shareText: String?, modifier: Modifier = Modifier)
             .glassCard(isDark(), AvColors.cyan)
             .clickable {
                 if (shareText == null) {
-                    Toast.makeText(ctx, "暂无定位，请开启 GPS 后重试", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, ctx.getString(R.string.toast_no_gps), Toast.LENGTH_SHORT).show()
                 } else {
                     val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(android.content.Intent.EXTRA_TEXT, shareText)
                     }
                     ctx.startActivity(
-                        android.content.Intent.createChooser(send, "分享我的位置")
+                        android.content.Intent.createChooser(send, ctx.getString(R.string.share_pos_title))
                     )
                 }
             }
@@ -1510,14 +1518,14 @@ private fun ShareLocationCard(shareText: String?, modifier: Modifier = Modifier)
     ) {
         Column {
             Text(
-                if (shareText == null) "等待定位…" else "📤 发送经纬度给好友",
+                if (shareText == null) stringResource(R.string.wait_fix) else stringResource(R.string.send_pos_btn),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.weight(1f))
             if (shareText != null) {
                 Text(
-                    "含高德 / 谷歌地图链接",
+                    stringResource(R.string.share_pos_sub),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

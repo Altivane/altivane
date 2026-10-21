@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.domain.AppLog
 import kotlinx.coroutines.delay
@@ -150,7 +151,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                         val name = try {
                             String(r.metadata, Charsets.UTF_8).trim('"', '{', '}', ' ')
                                 .substringAfter(":").trim('"', ' ')
-                        } catch (_: Exception) { "未知区域" }
+                        } catch (_: Exception) { ctx.getString(R.string.region_unknown) }
                         RegionRow(name, false, 0L, r)
                     }
                     regions = rows
@@ -193,7 +194,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
     fun download(name: String, bbox: DoubleArray) {
         // 免费源离线政策 ~4 并发，同时只跑 1 个城市，避免叠加限流
         if (progress.isNotEmpty()) {
-            Toast.makeText(ctx, "已有城市在下载中，请等待完成", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, ctx.getString(R.string.toast_busy), Toast.LENGTH_SHORT).show()
             return
         }
         try {
@@ -217,7 +218,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                                 progress.remove(name)
                                 retries.remove(name)
                                 tick++
-                                Toast.makeText(ctx, "$name 离线包完成", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(ctx, ctx.getString(R.string.toast_done_fmt, name), Toast.LENGTH_SHORT).show()
                             }
                         }
 
@@ -236,14 +237,14 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                             } else {
                                 retries.remove(name)
                                 progress.remove(name)
-                                error = "$name 多次失败：${e.reason}（免费源限流，稍后重试或换 Wi-Fi）"
+                                error = ctx.getString(R.string.err_fail_fmt, name, "${e.reason}" + ctx.getString(R.string.err_rate_limit_hint))
                                 region.setDownloadState(OfflineRegion.STATE_INACTIVE)
                             }
                         }
 
                         override fun mapboxTileCountLimitExceeded(limit: Long) {
                             AppLog.e("Offline", "$name tiles > $limit（范围过大）")
-                            error = "$name 瓦片数超限，已暂停（范围过大）"
+                            error = ctx.getString(R.string.err_limit_fmt, name)
                             progress.remove(name)
                             retries.remove(name)
                             region.setDownloadState(OfflineRegion.STATE_INACTIVE)
@@ -255,14 +256,14 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
 
                 override fun onError(e: String) {
                     AppLog.e("Offline", "$name create region: $e")
-                    error = "$name 创建区域失败：$e"
+                    error = ctx.getString(R.string.err_create_fmt, name, "$e")
                     progress.remove(name)
                     retries.remove(name)
                 }
             })
         } catch (e: Exception) {
             AppLog.e("Offline", "$name download()", e)
-            error = "$name 启动失败：${e.message}"
+            error = ctx.getString(R.string.err_start_fmt, name, "${e.message}")
         }
     }
 
@@ -283,10 +284,10 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onBackground)
             }
             Column(Modifier.weight(1f)) {
-                Text("离线地图", style = MaterialTheme.typography.headlineMedium,
+                Text(ctx.getString(R.string.set_offline_map), style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
                 Text(
-                    "已缓存 ${regions.size} 个城市 · OSM 矢量（免 Key）",
+                    ctx.getString(R.string.cached_fmt, regions.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -297,7 +298,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                 if (!showSearch) search = ""
             }) {
                 Icon(
-                    Icons.Default.Search, "搜索城市",
+                    Icons.Default.Search, ctx.getString(R.string.search_city),
                     tint = if (showSearch) AvColors.cyan else MaterialTheme.colorScheme.onBackground
                 )
             }
@@ -308,7 +309,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                 value = search,
                 onValueChange = { search = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("输入城市名，如：泰安") },
+                placeholder = { Text(ctx.getString(R.string.search_hint)) },
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium
             )
@@ -331,7 +332,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
             val downloading = progress.keys.toList()
             if (downloading.isNotEmpty()) {
                 item {
-                    Text("下载中", style = MaterialTheme.typography.titleMedium,
+                    Text(ctx.getString(R.string.downloading), style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground)
                 }
                 items(downloading, key = { "dl_$it" }) { name ->
@@ -345,7 +346,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                                     color = AvColors.onColor(AvColors.cyan), fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    "暂停",
+                                    ctx.getString(R.string.btn_pause),
                                     Modifier
                                         .clip(RoundedCornerShape(10.dp))
                                         .clickable {
@@ -381,7 +382,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
             // ---- 已缓存 ----
             if (regions.isNotEmpty()) {
                 item {
-                    Text("已缓存", style = MaterialTheme.typography.titleMedium,
+                    Text(ctx.getString(R.string.cached_title), style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground)
                 }
                 items(regions, key = { "rg_" + it.name }) { row ->
@@ -390,14 +391,14 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                             Column(Modifier.weight(1f)) {
                                 Text(row.name, style = MaterialTheme.typography.titleSmall)
                                 Text(
-                                    if (row.complete) "完整 · ${row.sizeMb} MB" else "未完成 · ${row.sizeMb} MB",
+                                    if (row.complete) ctx.getString(R.string.complete_fmt, "${row.sizeMb}") else ctx.getString(R.string.incomplete_fmt, "${row.sizeMb}"),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             if (!row.complete) {
                                 Text(
-                                    "继续",
+                                    ctx.getString(R.string.btn_resume),
                                     Modifier
                                         .clip(RoundedCornerShape(10.dp))
                                         .clickable {
@@ -411,7 +412,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                                 Spacer(Modifier.width(6.dp))
                             }
                             Text(
-                                "删除",
+                                ctx.getString(R.string.btn_delete),
                                 Modifier
                                     .clip(RoundedCornerShape(10.dp))
                                     .clickable {
@@ -435,7 +436,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
 
             // ---- 可下载省份 ----
             item {
-                Text("按城市缓存（zoom 9-12 街道级，一次一个）",
+                Text(ctx.getString(R.string.zoom_hint),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground)
             }
@@ -446,7 +447,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
                         Text(
-                            "下载",
+                            ctx.getString(R.string.btn_download),
                             Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .clickable { download(name, bbox) }
@@ -459,7 +460,7 @@ fun OfflineMapScreen(app: RideApp, onBack: () -> Unit) {
             }
             if (shown.isEmpty() && q.isNotBlank()) {
                 item {
-                    Text("无匹配城市", style = MaterialTheme.typography.labelSmall,
+                    Text(ctx.getString(R.string.no_match), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

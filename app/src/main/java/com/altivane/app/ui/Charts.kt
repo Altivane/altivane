@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -277,7 +279,7 @@ fun EnergySplitBar(
     showLegend: Boolean = true
 ) {
     val colors = listOf(low, mid, high)
-    val names = listOf("低强度", "中强度", "高强度")
+    val names = listOf(stringResource(R.string.int_low), stringResource(R.string.int_mid), stringResource(R.string.int_high))
     val total = split.sum()
     val vMax = (split.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
     Column(modifier) {
@@ -630,11 +632,11 @@ fun HourBars(
             val dim = MaterialTheme.typography.labelSmall.copy(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text("0时", style = dim)
-            Box(Modifier.weight(1f)) { Text("6时", style = dim, modifier = Modifier.align(Alignment.CenterStart)) }
-            Box(Modifier.weight(1f)) { Text("12时", style = dim, modifier = Modifier.align(Alignment.CenterStart)) }
+            Text(stringResource(R.string.hour_0), style = dim)
+            Box(Modifier.weight(1f)) { Text(stringResource(R.string.hour_6), style = dim, modifier = Modifier.align(Alignment.CenterStart)) }
+            Box(Modifier.weight(1f)) { Text(stringResource(R.string.hour_12), style = dim, modifier = Modifier.align(Alignment.CenterStart)) }
             Box(Modifier.weight(1f)) {
-                Text(if (nowHour in 13..23) "现在" else "18时", style = dim, modifier = Modifier.align(Alignment.CenterEnd))
+                Text(if (nowHour in 13..23) stringResource(R.string.now_label) else stringResource(R.string.hour_18), style = dim, modifier = Modifier.align(Alignment.CenterEnd))
             }
         }
     }
@@ -657,6 +659,8 @@ fun MoveRestBand(
     mini: Boolean = false
 ) {
     val fg = MaterialTheme.colorScheme.onBackground
+    val stayWord = stringResource(R.string.lbl_stay)
+    val minWord = stringResource(R.string.unit_min_short)
     Column(modifier) {
         Canvas(Modifier.fillMaxWidth().weight(1f)) {
             if (series.isEmpty()) return@Canvas
@@ -731,16 +735,16 @@ fun MoveRestBand(
                 val cx = (segW * bestStart + segW * bestLen / 2f)
                     .coerceIn(18.dp.toPx(), size.width - 18.dp.toPx())
                 val mins = (spanMs * bestLen.toDouble() / segs / 60000.0).let {
-                    if (it >= 1.0) "${it.toInt()}分" else "<1分"
+                    if (it >= 1.0) "${it.toInt()}$minWord" else "<1$minWord"
                 }
-                drawContext.canvas.nativeCanvas.drawText("停留$mins", cx, bandTop - 3.dp.toPx(), p)
+                drawContext.canvas.nativeCanvas.drawText("$stayWord$mins", cx, bandTop - 3.dp.toPx(), p)
             }
         }
         if (!mini) {
             Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(7.dp).background(moving, CircleShape))
                 Text(
-                    "移动", style = MaterialTheme.typography.labelSmall,
+                    stringResource(R.string.lbl_moving), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp)
                 )
@@ -749,7 +753,7 @@ fun MoveRestBand(
                         .border(0.75.dp, fg.copy(alpha = 0.35f), CircleShape)
                 )
                 Text(
-                    "停留", style = MaterialTheme.typography.labelSmall,
+                    stringResource(R.string.lbl_stay), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp)
                 )

@@ -47,6 +47,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.RideEntity
 import com.altivane.app.domain.Coach
@@ -149,9 +151,9 @@ fun AchievementsScreen(app: RideApp, onBack: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onBackground)
             }
             Column {
-                Text("我的成就", style = MaterialTheme.typography.headlineMedium,
+                Text(stringResource(R.string.menu_achv), style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
-                Text("已点亮 $got / ${badges.size} 枚徽章",
+                Text(stringResource(R.string.achv_progress, got, badges.size),
                     style = MaterialTheme.typography.labelMedium, color = AvColors.yellow)
             }
         }
@@ -166,7 +168,7 @@ fun AchievementsScreen(app: RideApp, onBack: () -> Unit) {
         ) {
             Column {
                 Text(
-                    "已完成 ${(got * 100 / badges.size)}%",
+                    stringResource(R.string.achv_done_fmt, got * 100 / badges.size),
                     style = MaterialTheme.typography.headlineMedium.copy(fontSize = 34.sp),
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -249,7 +251,7 @@ fun AchievementsScreen(app: RideApp, onBack: () -> Unit) {
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        if (done) "已达成" else "%.0f%%".format(ratio * 100),
+                        if (done) stringResource(R.string.badge_done) else "%.0f%%".format(ratio * 100),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (done) AvColors.yellow else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -566,9 +568,9 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onBackground)
             }
             Column {
-                Text("$year 年度报告", style = MaterialTheme.typography.headlineMedium,
+                Text(stringResource(R.string.report_year_fmt, year), style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
-                Text("Altivane · 你的每一步都在记录", style = MaterialTheme.typography.labelMedium,
+                Text(stringResource(R.string.report_sub), style = MaterialTheme.typography.labelMedium,
                     color = AvColors.cyan)
             }
         }
@@ -581,7 +583,7 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
                     .glassCard(isDark(), null),
                 contentAlignment = Alignment.Center
             ) {
-                Text("今年还没有运动记录，GO 一下开启第一次",
+                Text(stringResource(R.string.report_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -596,7 +598,7 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
                 .padding(16.dp)
         ) {
             Column {
-                Text("$year 总里程", style = MaterialTheme.typography.labelMedium,
+                Text(stringResource(R.string.report_km_fmt, year), style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text("%.0f".format(yrKm), fontSize = 64.sp, fontWeight = FontWeight.Black,
@@ -609,18 +611,18 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
 
         // 四宫格统计
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCard("运动次数", "${yr.size}", "次", AvColors.cyan, Modifier.weight(1f))
-            StatCard("总时长", "%.0f".format(yrH), "小时", AvColors.blue, Modifier.weight(1f))
+            StatCard(stringResource(R.string.stat_workouts), "${yr.size}", stringResource(R.string.unit_count), AvColors.cyan, Modifier.weight(1f))
+            StatCard(stringResource(R.string.stat_total_dur), "%.0f".format(yrH), stringResource(R.string.unit_hours), AvColors.blue, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCard("总消耗", "$yrKcal", "kcal", AvColors.pink, Modifier.weight(1f))
-            StatCard("月均里程", "%.1f".format(yrKm / 12), "km", AvColors.violet, Modifier.weight(1f))
+            StatCard(stringResource(R.string.lbl_total_cals), "$yrKcal", "kcal", AvColors.pink, Modifier.weight(1f))
+            StatCard(stringResource(R.string.lbl_per_km), "%.1f".format(yrKm / 12), "km", AvColors.violet, Modifier.weight(1f))
         }
 
         // 骑行 / 徒步分类统计（月度里程双色彩条）
         listOf(
-            Triple("骑行", rideList, monthlyRide) to AvColors.cyan,
-            Triple("徒步", hikeList, monthlyHike) to AvColors.green
+            Triple(stringResource(R.string.sport_ride), rideList, monthlyRide) to AvColors.cyan,
+            Triple(stringResource(R.string.sport_hike), hikeList, monthlyHike) to AvColors.green
         ).forEach { (data, accent) ->
             val (name, list, monthly) = data
             val km = list.sumOf { it.distanceM } / 1000.0
@@ -639,12 +641,12 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
                         Text(name, style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onBackground)
                         Spacer(Modifier.weight(1f))
-                        Text("${list.size} 次", style = MaterialTheme.typography.labelMedium,
+                        Text("${list.size} ${stringResource(R.string.unit_count)}", style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "%.1f km · %.0f 小时 · $kcal kcal".format(km, h),
+                        "%.1f km · %.0f %s · $kcal kcal".format(km, h, stringResource(R.string.unit_hours)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -673,10 +675,10 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
                         }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        listOf("1月", "4月", "7月", "10月", "12月").forEach {
-                            Text(it, style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        listOf(R.string.month_1, R.string.month_4, R.string.month_7, R.string.month_10, R.string.month_12).forEach { m ->
+                        Text(stringResource(m), style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     }
                 }
             }
@@ -691,7 +693,7 @@ fun YearlyReportScreen(app: RideApp, onBack: () -> Unit) {
                     .padding(14.dp)
             ) {
                 Column {
-                    Text("年度最佳单次", style = MaterialTheme.typography.labelMedium,
+                    Text(stringResource(R.string.yearly_best), style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(6.dp))
                     Text(

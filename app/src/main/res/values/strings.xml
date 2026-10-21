@@ -25,7 +25,7 @@
     <string name="card_track">轨迹</string>
     <string name="card_profile">海拔图</string>
 
-    <!-- 格式串（多占位符必须位置化） -->
+    <!-- 格式串 -->
     <string name="fmt_card_tile">%s 卡片</string>
     <string name="fmt_edit_cards">编辑卡片 · %s</string>
     <string name="fmt_sport_date">%1$s · %2$s</string>
@@ -34,7 +34,7 @@
     <string name="fmt_warmup">%s热身清单</string>
     <string name="fmt_coming">%s即将开始</string>
 
-    <!-- 通用文案 -->
+    <!-- 通用 -->
     <string name="edit_cards_sub">已添加长按拖动排序 · 未添加点 + 加回</string>
     <string name="btn_cancel">取消</string>
     <string name="btn_delete">删除</string>
@@ -46,10 +46,13 @@
     <string name="warmup_tag">热身</string>
     <string name="cancel_hint">点击任意处取消</string>
     <string name="wp_tag">打卡</string>
+    <string name="loading">加载中…</string>
 
     <!-- 记录通知 -->
     <string name="notif_rec_fmt">%s记录中 · Altivane</string>
     <string name="notif_paused_fmt">%s已暂停 · Altivane</string>
+    <string name="notif_big_fmt">速度 %1$.1f km/h    心率 %2$s 次/分\n里程 %3$.2f km    消耗 %4$d kcal    海拔 %5$.0f m</string>
+    <string name="btn_stop">停止</string>
 
     <!-- 桌面小部件 -->
     <string name="widget_speed">时速</string>
@@ -60,4 +63,361 @@
     <string name="widget_compass">指南针</string>
     <string name="widget_track">轨迹</string>
     <string name="widget_sos">SOS 手电筒</string>
+    <string name="wm_title">Altivane · 运动</string>
+    <string name="wt_empty">开始运动后显示全程轨迹</string>
+
+    <!-- 设置 -->
+    <string name="set_title">设置</string>
+    <string name="set_theme">主题</string>
+    <string name="set_theme_light">日光竞速：米白底 · 墨青字</string>
+    <string name="set_theme_dark">暗夜竞速：深空黑 · 电光青</string>
+    <string name="set_theme_sys">跟随系统深浅色自动切换</string>
+    <string name="set_lang">语言 Language</string>
+    <string name="set_lang_sys">跟随系统</string>
+    <string name="set_ble">蓝牙外设</string>
+    <string name="set_keepalive">后台记录保活</string>
+    <string name="set_keepalive_text">1. 位置权限设为「始终允许」，否则锁屏后轨迹中断\n2. 电池优化对本应用设为「不限制」，国产 ROM 必须设置\n3. 最近任务里锁定本应用，防止划掉被杀</string>
+    <string name="set_offline_map">离线地图</string>
+    <string name="set_offline_manage">下载管理 ›</string>
+    <string name="set_offline_desc">按城市/省份下载地图离线包，山区/郊区无网也能看清轨迹底图；存储在公共目录（文件管理器可见），支持下载/暂停/删除/更新</string>
+    <string name="set_log">运行日志</string>
+    <string name="set_log_desc">记录 App 运行与崩溃信息（%1$d KB），闪退后分享日志便于定位修复</string>
+    <string name="set_log_crash_suffix"> · 检测到崩溃记录！</string>
+    <string name="btn_export_log">导出日志</string>
+    <string name="btn_export_crash">导出崩溃日志</string>
+    <string name="btn_clear">清空</string>
+    <string name="set_about">关于 Altivane</string>
+    <string name="about_body">Altivane 是一款离线优先的运动轨迹记录器，为骑行与徒步打造：\n· GPS 轨迹记录——锁屏后台不断线，暂停/继续\n· BLE 心率 / 踏频实时接入，自动重连\n· 气压计海拔与累计爬升（Keytel 卡路里）\n· 矢量罗盘 + 水平仪，全景数据卡片\n· MapLibre 开源地图：标准/卫星/徒步/骑行四种图层\n· 离线地图包按城市下载，无网看轨迹\n· 打卡点：手动/每公里/每百米爬升自动打卡，可拍照\n· GPX 1.1 导出（含心率扩展与打卡点）\n· 桌面小部件×8：速度/心率/里程/消耗/罗盘/SOS 等\n数据全部保存在本机：无账号、无上传、无广告、无追踪。</string>
+    <string name="about_disclaimer">声明：本应用处于开发测试阶段，仅供个人学习与户外参考使用。户外运动请注意安全，轨迹与传感器数据不作为专业导航或安全依据。</string>
+
+    <!-- 蓝牙外设 -->
+    <string name="ble_bpm">次/分</string>
+    <string name="ble_connected">已连接</string>
+    <string name="ble_disconnected">未连接</string>
+    <string name="ble_cad_missing">已连接 · 未接踏频传感器</string>
+    <string name="ble_saved">已保存设备</string>
+    <string name="ble_in_use"> · 使用中</string>
+    <string name="btn_connect">连接</string>
+    <string name="btn_remove">移除</string>
+    <string name="ble_found">发现新设备</string>
+    <string name="ble_scanning">扫描中…点击停止</string>
+    <string name="ble_scan">扫描</string>
+    <string name="ble_no_permission">缺少蓝牙权限，请到系统设置开启</string>
+    <string name="ble_none_found">未发现新设备。手环连接状态下不会广播：若刚断开/移除，等几秒让它恢复广播，或关掉再打开「心率共享」后重扫。</string>
+    <string name="ble_hint">提示：手环请开启「心率共享/广播」；App 启动、回到前台、点 GO 时会自动连接已保存设备，意外断线后也会自动挂回。</string>
+    <string name="dev_band">手环</string>
+    <string name="dev_watch">手表</string>
+    <string name="dev_hr_belt">心率带</string>
+    <string name="dev_cadence">踏频器</string>
+    <string name="dev_other">外设</string>
+
+    <!-- 运动主页 -->
+    <string name="no_baro">设备无气压计</string>
+    <string name="unit_m_alt">m 海拔</string>
+    <string name="unit_m_rel">m 相对</string>
+    <string name="btn_enable">去开启</string>
+    <string name="dlg_gps_title">定位服务未开启</string>
+    <string name="dlg_gps_text">GPS 总开关没打开，运动轨迹将不会记录。\n请到系统设置的定位服务里开启后再按 GO。</string>
+    <string name="sub_avg_peak">均速 %1$.1f · 峰值 %2$.1f · %3$s</string>
+    <string name="sub_speed">时速 %1$.1f · %2$s</string>
+    <string name="btn_pause">暂停</string>
+    <string name="btn_resume">继续</string>
+    <string name="btn_end">结束</string>
+    <string name="toast_hold_end">长按 2 秒结束，避免误触</string>
+    <string name="tts_release_cancel">松手取消，长按两秒结束运动</string>
+    <string name="hint_lock_gps">提示：锁屏后若轨迹中断，请到系统设置将本应用位置权限设为「始终允许」</string>
+    <string name="lbl_heading">航向</string>
+    <string name="lbl_current">当前</string>
+    <string name="lbl_avg">平均</string>
+    <string name="lbl_avg_speed">均速</string>
+    <string name="lbl_peak">峰值</string>
+    <string name="lbl_peak_speed">峰值时速</string>
+    <string name="lbl_fastest_km">最快公里</string>
+    <string name="lbl_slowest_km">最慢公里</string>
+    <string name="lbl_moving">移动</string>
+    <string name="lbl_stay">停留</string>
+    <string name="lbl_ratio">占比</string>
+    <string name="lbl_per_km">每公里</string>
+    <string name="lbl_total_cals">总消耗</string>
+    <string name="lbl_rel_start">相对起点</string>
+    <string name="lbl_total_climb">累计爬升</string>
+    <string name="lbl_max">最高</string>
+    <string name="lbl_min">最低</string>
+    <string name="lbl_steps">步数</string>
+    <string name="lbl_climb">爬升</string>
+    <string name="unit_steps_fmt">%d 步</string>
+    <string name="unit_min_fmt">%d 分</string>
+    <string name="unit_min_short">分</string>
+    <string name="int_low">低强度</string>
+    <string name="int_mid">中强度</string>
+    <string name="int_high">高强度</string>
+    <string name="hour_0">0时</string>
+    <string name="hour_6">6时</string>
+    <string name="hour_12">12时</string>
+    <string name="hour_18">18时</string>
+    <string name="now_label">现在</string>
+
+    <!-- 教练播报（TTS） -->
+    <string name="coach_start_ride">骑行开始，注意安全，先热身再发力</string>
+    <string name="coach_start_hike">徒步开始，保持节奏，前两公里慢走热身</string>
+    <string name="coach_km_fmt">第 %1$d 公里，用时 %2$s，累计消耗 %3$d 千卡</string>
+    <string name="coach_km_hike_suffix">，注意补充水分</string>
+    <string name="coach_finish_fmt">%1$s结束，全程 %2$s 公里，用时 %3$s，消耗 %4$d 千卡。辛苦了，记得拉伸放松</string>
+    <string name="coach_hr_zone5">心率进入极限区间，建议降低强度，调整呼吸</string>
+    <string name="coach_hr4_hike">心率偏高，上坡可以放缓步频</string>
+    <string name="coach_hydrate_fmt">已连续运动 %1$d 分钟，建议补水补盐</string>
+    <string name="coach_wp_fmt">已打卡：%s</string>
+    <string name="warmup_ride_1">肩颈环绕 30 秒，放松上肢</string>
+    <string name="warmup_ride_2">高抬腿原地 30 秒激活心率</string>
+    <string name="warmup_ride_3">弓步压腿每侧 20 秒，激活髋部</string>
+    <string name="warmup_ride_4">手腕脚踝环绕各 10 圈</string>
+    <string name="warmup_ride_5">第一公里用低强度骑完再提速</string>
+    <string name="warmup_hike_1">脚踝环绕每侧 15 圈，山路防崴脚</string>
+    <string name="warmup_hike_2">弓步压腿每侧 20 秒</string>
+    <string name="warmup_hike_3">肩背拉伸 30 秒，调整背包肩带</string>
+    <string name="warmup_hike_4">原地小跳 20 次激活小腿</string>
+    <string name="warmup_hike_5">前两公里慢走热身，再进入正常步频</string>
+    <string name="stretch_ride_1">股四头肌站立拉伸，每侧 30 秒</string>
+    <string name="stretch_ride_2">腘绳肌前屈拉伸，每侧 30 秒</string>
+    <string name="stretch_ride_3">小腿后侧拉伸，每侧 30 秒</string>
+    <string name="stretch_ride_4">肩颈与背部伸展 1 分钟</string>
+    <string name="stretch_ride_5">补充蛋白质与水分</string>
+    <string name="stretch_hike_1">小腿腓肠肌拉伸，每侧 40 秒（下坡重点）</string>
+    <string name="stretch_hike_2">大腿前侧与后侧拉伸各 30 秒</string>
+    <string name="stretch_hike_3">臀部梨状肌拉伸，每侧 30 秒</string>
+    <string name="stretch_hike_4">脚底筋膜放松，踩踩滚轴或水瓶</string>
+    <string name="stretch_hike_5">热水泡脚缓解足部疲劳</string>
+
+    <!-- 运动详情 -->
+    <string name="vs_prev_km">较上次 %1$s%2$.2f km</string>
+    <string name="last_km_fmt">上次 %1$.2f km · %2$s</string>
+    <string name="stat_avg">均速</string>
+    <string name="stat_peak">峰值</string>
+    <string name="hr_chart_sub">BPM · 全程逐点</string>
+    <string name="hr_avg_fmt">平均 %d</string>
+    <string name="hr_peak_fmt">峰值 %d</string>
+    <string name="profile_detail">海拔剖面</string>
+    <string name="profile_sub">颜色低→高渐变</string>
+    <string name="ele_max_fmt">↑ 最高 %.0f m</string>
+    <string name="ele_min_fmt">↓ 最低 %.0f m</string>
+    <string name="report_title">运动解读</string>
+    <string name="toast_gpx_done">GPX 已导出（含打卡点）</string>
+    <string name="btn_export_gpx">导出 GPX</string>
+    <string name="btn_share_image">生成分享图</string>
+    <string name="toast_share_fail">分享失败：%s</string>
+    <string name="rep_vs_prev">本次%1$s %2$.2f km，较上次%3$s%4$.2f km（上次 %5$.2f km）</string>
+    <string name="rep_moving_vs">移动用时 %1$s，上次 %2$s</string>
+    <string name="rep_first">本次%1$s %2$.2f km，移动用时 %3$s</string>
+    <string name="rep_avg_peak">均速 %1$.1f km/h，峰值 %2$.1f km/h</string>
+    <string name="rep_pace">平均配速 %1$s min/km，峰值时速 %2$.1f km/h</string>
+    <string name="rep_climb_elev_cal">累计爬升 %1$.0f m，最高海拔 %2$.0f m，消耗 %3$d kcal</string>
+    <string name="rep_hr_aero">强度以有氧耐力为主，心率余量充足</string>
+    <string name="rep_hr_lactate">中高强度节奏，接近乳酸阈，注意补给与恢复</string>
+    <string name="rep_hr_hard">高强度输出，平均心率接近本次峰值，注意身体反馈</string>
+    <string name="rep_hr_fmt">心率平均 %1$d bpm、最高 %2$d bpm：%3$s</string>
+
+    <!-- 轨迹详情（卡片详情页） -->
+    <string name="share_pos_text">我的位置：%1$.5f, %2$.5f\n高德地图：https://uri.amap.com/marker?position=%3$.6f,%4$.6f&amp;name=MyLocation\nGoogle Maps：https://maps.google.com/?q=%5$.5f,%6$.5f</string>
+    <string name="compass_status_realtime">磁力计实时</string>
+    <string name="compass_status_wait">等待传感器数据</string>
+    <string name="tilt_fmt"> · 倾斜 %.0f°</string>
+    <string name="track_empty">开始运动后记录实时轨迹</string>
+    <string name="unit_km_dist">km · 里程</string>
+    <string name="unit_avg_kmh">km/h · 均速</string>
+    <string name="unit_pace_minkm">min/km · 配速</string>
+    <string name="unit_m_climb">m · 爬升</string>
+    <string name="wp_last_fmt">%s · 打卡</string>
+    <string name="wp_count_fmt"> · 共 %d 个</string>
+    <string name="profile_empty">开始运动后记录海拔剖面</string>
+    <string name="fmt_bpm_val">%d 次/分</string>
+    <string name="fmt_min_val">%d 分</string>
+    <string name="trend_title">趋势</string>
+    <string name="peak_fmt">峰 %s</string>
+    <string name="low_fmt">低 %s</string>
+    <string name="weather_title">天气趋势（气压判读）</string>
+    <string name="weather_na">此设备没有气压传感器，气压卡与天气趋势不可用</string>
+    <string name="weather_rest">其余功能（GPS 轨迹 / 心率 / 踏频等）不受影响</string>
+    <string name="wx_hi_t">高压 · 晴好稳定</string>
+    <string name="wx_hi_d">气压 ≥1020 hPa，高压系统控制，天气晴朗稳定，适合出行</string>
+    <string name="wx_mid_t">常压 · 天气多变</string>
+    <string name="wx_mid_d">气压 1000~1020 hPa，处于常见区间，关注云量与风的变化</string>
+    <string name="wx_lo_t">低压 · 阴雨概率大</string>
+    <string name="wx_lo_d">气压 ≤1000 hPa，低压系统影响，阴雨/大风概率显著上升</string>
+    <string name="wx_drop_fast_t">▼ 气压骤降 %.1f hPa</string>
+    <string name="wx_drop_fast_d">3 小时内下降超 1.5 hPa，天气即将转坏，注意防风防雨</string>
+    <string name="wx_drop_slow_t">↘ 缓慢下降 %.1f hPa</string>
+    <string name="wx_drop_slow_d">气压走低，天气趋于不稳定</string>
+    <string name="wx_rise_t">▲ 气压回升 %.1f hPa</string>
+    <string name="wx_rise_d">气压持续回升，天气趋于好转</string>
+    <string name="spec_title">常见气压规格</string>
+    <string name="spec_1026">强高压 · 干冷晴朗（冬季寒潮）</string>
+    <string name="spec_1013">海平面标准大气压（ISA 基准）</string>
+    <string name="spec_1000">一般低压 · 多云阵雨</string>
+    <string name="spec_980">温带气旋 · 大风降雨</string>
+    <string name="spec_950">强台风外围 · 恶劣天气</string>
+    <string name="zone_z1">Z1 恢复</string>
+    <string name="zone_z2">Z2 轻松</string>
+    <string name="zone_z3">Z3 有氧</string>
+    <string name="zone_z4">Z4 乳酸</string>
+    <string name="zone_z5">Z5 极限</string>
+    <string name="hr_zones_title">心率区间分布</string>
+    <string name="hr_zones_empty">连接心率带并开始运动后，按 Z1~Z5 统计各区间时长占比</string>
+    <string name="pace_title">每公里配速</string>
+    <string name="km_fmt">第 %d 公里</string>
+    <string name="km_total_fmt">…共 %d 公里</string>
+    <string name="intensity_title">强度分段消耗</string>
+    <string name="move_stay_title">移动 / 停留</string>
+    <string name="move_fmt">● 移动 %s</string>
+    <string name="stay_fmt">● 停留 %s</string>
+    <string name="stay_canvas_fmt">停留%d分</string>
+    <string name="last_ride_none">暂无运动记录</string>
+    <string name="unit_km_last">km（上次）</string>
+    <string name="unit_last">（上次）</string>
+    <string name="unit_pace_avg">min/km（平均）</string>
+    <string name="hr_hint_live">实时心率见上方图表</string>
+    <string name="cad_hint_live">实时踏频见上方图表</string>
+    <string name="unit_kcal_last">kcal（上次）</string>
+    <string name="unit_kmh_last">km/h（上次）</string>
+    <string name="compass_hint_live">航向实时可见</string>
+    <string name="baro_hint_live">实时气压见上方数值</string>
+    <string name="unit_m_lastmax">m（上次最高）</string>
+    <string name="hint_distance">累计里程：GPS 逐点累加（Haversine 球面距离）；步数 = 里程 ÷ 0.72 m（成人通用步长估算，仅徒步）</string>
+    <string name="hint_duration">移动时间：速度低于 2.5 km/h 的停留不计入</string>
+    <string name="hint_pace">配速 = 每公里用时。跑步/徒步核心指标，实时按当前速度换算</string>
+    <string name="hint_hr">实时心率（BLE 0x2A37 标准协议）。超过最大心率 90% 自动语音预警降速</string>
+    <string name="hint_cad">踏频（BLE CSC 0x2A5B 协议）：每分钟曲柄圈数，含回绕与停踩处理</string>
+    <string name="hint_cals">实时消耗：有心率用 Keytel 公式，无心率按 MET 分桶估算</string>
+    <string name="hint_max_speed">本次运动最高瞬时速度（GPS 多普勒）</string>
+    <string name="hint_compass">磁力计航向：红针指北、蓝针指南；下方附经纬度、SOS 求救闪光（三短三长三短）与一键位置分享</string>
+    <string name="hint_altitude">气压计测高（ISA 国际标准大气）：运动开始时以 GPS 海拔校准零点，之后气压灵敏追踪——徒步显示海拔高程，骑行显示相对起点高程；气压 0.1 hPa ≈ 0.8 m</string>
+    <string name="hint_track">实时彩虹轨迹：速度分色，慢=紫蓝、快=红；打卡照片钉在对应位置</string>
+    <string name="hint_profile">海拔剖面：上山下山的高度变化，彩条渐变描边</string>
+    <string name="dir_0">北</string>
+    <string name="dir_1">北偏东</string>
+    <string name="dir_2">东北</string>
+    <string name="dir_3">东偏北</string>
+    <string name="dir_4">东</string>
+    <string name="dir_5">东偏南</string>
+    <string name="dir_6">东南</string>
+    <string name="dir_7">南偏东</string>
+    <string name="dir_8">南</string>
+    <string name="dir_9">南偏西</string>
+    <string name="dir_10">西南</string>
+    <string name="dir_11">西偏南</string>
+    <string name="dir_12">西</string>
+    <string name="dir_13">西偏北</string>
+    <string name="dir_14">西北</string>
+    <string name="dir_15">北偏西</string>
+    <string name="toast_no_gps">暂无定位，请开启 GPS 后重试</string>
+    <string name="share_pos_title">分享我的位置</string>
+    <string name="btn_share_pos">分享位置</string>
+    <string name="alt_fmt">海拔 %.0f m</string>
+    <string name="no_gps_outdoor">暂无定位，请到空旷处开启 GPS</string>
+    <string name="toast_sos_perm">手电筒需要相机权限，请重新进入应用完成授权</string>
+    <string name="sos_on">SOS 闪烁中</string>
+    <string name="sos_off">SOS 手电筒</string>
+    <string name="sos_on_tap">点击停止闪光</string>
+    <string name="sos_off_sub">点击开手电筒 · 三短三长三短</string>
+    <string name="btn_torch">点击开手电筒</string>
+    <string name="survive_title">🧭 野外辨向 · 迷失生存</string>
+    <string name="survive_sub">太阳 / 手表 / 北极星 / 植被辨向 + 迷路 STOP 三步 · 点击展开</string>
+    <string name="survive_1">☀️ 太阳辨向：日出东方、日落西方；正午（北半球）太阳在正南，影子最短的一端指向北</string>
+    <string name="survive_2">⌚ 手表辨向：时针对准太阳，时针与 12 点方向夹角的平分线即正南（北半球）</string>
+    <string name="survive_3">🌟 夜间辨向：沿北斗七星勺口两颗星连线延长约 5 倍距离找到北极星，它永远指正北</string>
+    <string name="survive_4">🌲 植被辨向：向阳面（南侧）枝叶更茂密、年轮间距更宽；树皮背阴面多生青苔</string>
+    <string name="survive_5">⛰️ 迷路三步：先停下（STOP 原则），回忆最后确定位置的地标；登上制高点观察来路，原路返回最优先</string>
+    <string name="survive_6">💧 寻找人烟：沿溪流顺水而下，下游更容易遇到村庄与道路；入夜停止移动，保存体力与手机电量</string>
+    <string name="collapse">收起</string>
+    <string name="expand">展开</string>
+    <string name="wait_fix">等待定位…</string>
+    <string name="send_pos_btn">📤 发送经纬度给好友</string>
+    <string name="share_pos_sub">含高德 / 谷歌地图链接</string>
+
+    <!-- 我的 -->
+    <string name="default_user">Altivane 用户</string>
+    <string name="age_fmt">%d岁</string>
+    <string name="blood_fmt">%s型</string>
+    <string name="profile_total">累计 %1$.2f km · %2$d 次 · %3$d 小时</string>
+    <string name="profile_total_extra">%s · 累计 %.2f km</string>
+    <string name="stat_total_km">总里程</string>
+    <string name="stat_total_dur">总时长</string>
+    <string name="menu_history">全部记录</string>
+    <string name="menu_history_sub">每次运动的轨迹与数据</string>
+    <string name="menu_routes">我的路线</string>
+    <string name="menu_routes_sub">内置经典线路 · 热门路线</string>
+    <string name="menu_achv">我的成就</string>
+    <string name="menu_achv_sub">里程碑 · 三山五岳 · 打卡景点</string>
+    <string name="menu_report">年度报告</string>
+    <string name="menu_report_sub">今年运动数据一览</string>
+    <string name="menu_fav">我的收藏</string>
+    <string name="toast_fav_todo">收藏功能开发中</string>
+    <string name="menu_settings">设置</string>
+    <string name="menu_settings_sub">主题 · 蓝牙外设 · 保活 · 关于</string>
+    <string name="routes_sub">内置经典线路 · 示意 GPS</string>
+    <string name="dist_km_fmt">距您 %.0f km</string>
+    <string name="dist_m_fmt">距您 %.0f m</string>
+    <string name="dist_none">距您 --</string>
+    <string name="summit_fmt">主峰 %.0f m</string>
+    <string name="local_routes">当地热门路线</string>
+    <string name="routes_soon">即将上线：基于你所在城市的运动热力推荐</string>
+    <string name="profile_fmt">海拔剖面：%1$d m → %2$d m</string>
+    <string name="route_info">线路信息</string>
+    <string name="route_info_fmt">主峰海拔 %1$.0f m\n全程约 %2$s km\n参考登顶 %3$d 小时</string>
+    <string name="route_hint">提示：坐标为经典线路简化示意，实爬请开启徒步模式记录</string>
+
+    <!-- 历史 -->
+    <string name="history_title">运动记录</string>
+    <string name="history_empty">还没有运动记录\n去骑行页开始第一趟吧</string>
+
+    <!-- 分享 -->
+    <string name="share_title">分享</string>
+    <string name="share_img_cd">分享图</string>
+    <string name="toast_saved">已保存到相册 Pictures/Altivane</string>
+    <string name="toast_save_failed">保存失败</string>
+    <string name="btn_save_album">保存到相册</string>
+    <string name="btn_system_share">系统分享</string>
+
+    <!-- 离线地图 -->
+    <string name="cached_fmt">已缓存 %d 个城市 · OSM 矢量（免 Key）</string>
+    <string name="search_city">搜索城市</string>
+    <string name="search_hint">输入城市名，如：泰安</string>
+    <string name="downloading">下载中</string>
+    <string name="cached_title">已缓存</string>
+    <string name="complete_fmt">完整 · %s MB</string>
+    <string name="incomplete_fmt">未完成 · %s MB</string>
+    <string name="zoom_hint">按城市缓存（zoom 9-12 街道级，一次一个）</string>
+    <string name="btn_download">下载</string>
+    <string name="no_match">无匹配城市</string>
+    <string name="region_unknown">未知区域</string>
+    <string name="toast_busy">已有城市在下载中，请等待完成</string>
+    <string name="toast_done_fmt">%s 离线包完成</string>
+    <string name="err_fail_fmt">%1$s 多次失败：%2$s（免费源限流，稍后重试或换 Wi-Fi）</string>
+    <string name="err_limit_fmt">%s 瓦片数超限，已暂停（范围过大）</string>
+    <string name="err_create_fmt">%s 创建区域失败：%s</string>
+    <string name="err_start_fmt">%s 启动失败：%s</string>
+
+    <!-- 成就 / 年度报告 -->
+    <string name="achv_progress">已点亮 %1$d / %2$d 枚徽章</string>
+    <string name="achv_done_fmt">已完成 %d%%</string>
+    <string name="badge_done">已达成</string>
+    <string name="report_year_fmt">%d 年度报告</string>
+    <string name="report_sub">Altivane · 你的每一步都在记录</string>
+    <string name="report_empty">今年还没有运动记录，GO 一下开启第一次</string>
+    <string name="report_km_fmt">%d 总里程</string>
+    <string name="stat_workouts">运动次数</string>
+    <string name="unit_count">次</string>
+    <string name="unit_hours">小时</string>
+    <string name="month_1">1月</string>
+    <string name="month_4">4月</string>
+    <string name="month_7">7月</string>
+    <string name="month_10">10月</string>
+    <string name="month_12">12月</string>
+    <string name="yearly_best">年度最佳单次</string>
+    <string name="live_render">实时渲染</string>
+    <string name="live_render_home">首页卡片实时渲染</string>
+    <string name="tile_speed">时速 km/h</string>
+    <string name="tile_hr">心率 bpm</string>
+    <string name="tile_dist">里程 km</string>
+    <string name="tile_cals">消耗 kcal</string>
+    <string name="err_rate_limit_hint">（免费源限流，稍后重试或换 Wi-Fi）</string>
 </resources>

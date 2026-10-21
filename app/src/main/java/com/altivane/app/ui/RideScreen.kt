@@ -154,7 +154,7 @@ fun accentOf(t: CardType): Color = when (t) {
     CardType.PROFILE -> AvColors.fuchsia
 }
 
-fun cardValue(t: CardType, s: LiveState): Pair<String, String> = when (t) {
+fun cardValue(t: CardType, s: LiveState, ctx: android.content.Context): Pair<String, String> = when (t) {
     CardType.DISTANCE -> "%.2f".format(s.distanceM / 1000.0) to "km"
     CardType.DURATION -> {
         // 数字冒号格式（1:23:45 / 5:32 / 0:00），与其他卡数字风格对齐，无中文单位
@@ -164,26 +164,26 @@ fun cardValue(t: CardType, s: LiveState): Pair<String, String> = when (t) {
         else "%d:%02d".format(sec / 60, sec % 60)) to ""
     }
     CardType.PACE -> Coach.paceText(s.paceMinPerKm) to "min/km"
-    CardType.HR -> (if (s.hr > 0) s.hr.toString() else "--") to "次/分"
+    CardType.HR -> (if (s.hr > 0) s.hr.toString() else "--") to ctx.getString(R.string.ble_bpm)
     CardType.CAD -> (if (s.cad >= 0) s.cad.toString() else "--") to "rpm"
     CardType.CALS -> s.kcal.toInt().toString() to "kcal"
     CardType.MAX_SPEED -> "%.1f".format(s.maxKmh) to "km/h"
     CardType.COMPASS -> "%.0f".format(s.headingDeg) to "°"
     // 气压卡：只显示气压（hPa）；设备无气压计走空态说明，不再回退 GPS 海拔
     CardType.BARO -> when {
-        !s.hasBaro -> "--" to "无气压计"
+        !s.hasBaro -> "--" to ctx.getString(R.string.no_baro)
         s.pressureHpa > 0 -> "%.1f".format(s.pressureHpa) to "hPa"
         else -> "--" to ""
     }
     // 高度卡：徒步=气压计海拔（起点GPS校准+气压追踪），骑行=相对起点高程；无气压回退 GPS
     CardType.ALTITUDE -> when (s.sport) {
         SportType.HIKE -> when {
-            s.altBaroM != 0.0 -> "%.0f".format(s.altBaroM) to "m 海拔"
-            s.altM > 0.0 -> "%.0f".format(s.altM) to "m 海拔"
+            s.altBaroM != 0.0 -> "%.0f".format(s.altBaroM) to ctx.getString(R.string.unit_m_alt)
+            s.altM > 0.0 -> "%.0f".format(s.altM) to ctx.getString(R.string.unit_m_alt)
             else -> "--" to "m"
         }
         SportType.RIDE -> when {
-            s.baseAltSet -> "%.0f".format(s.relAltM) to "m 相对"
+            s.baseAltSet -> "%.0f".format(s.relAltM) to ctx.getString(R.string.unit_m_rel)
             else -> "--" to "m"
         }
     }
@@ -420,16 +420,19 @@ fun RideScreen(
                             CardType.COMPASS -> CompassTile(view.headingDeg, base)
                             CardType.TRACK -> TrackTile(viewPts, view.sport, base)
                             CardType.PROFILE -> ProfileTile(viewPts, base)
-                            else -> StatCard(
-                                stringResource(t.labelRes), cardValue(t, view).first, cardValue(t, view).second, accentOf(t),
-                                base, fill = true,
-                                chart = chartFor(
-                                    t, viewPts, view.sport,
-                                    hrS = hrLive, cadS = cadLive, pressS = pressLive
-                                ),
-                                bleBadge = (t == CardType.HR && hrName.isNotEmpty()) ||
-                                        (t == CardType.CAD && cadName.isNotEmpty())
-                            )
+                            else -> {
+                                val cv = cardValue(t, view, androidx.compose.ui.platform.LocalContext.current)
+                                StatCard(
+                                    stringResource(t.labelRes), cv.first, cv.second, accentOf(t),
+                                    base, fill = true,
+                                    chart = chartFor(
+                                        t, viewPts, view.sport,
+                                        hrS = hrLive, cadS = cadLive, pressS = pressLive
+                                    ),
+                                    bleBadge = (t == CardType.HR && hrName.isNotEmpty()) ||
+                                            (t == CardType.CAD && cadName.isNotEmpty())
+                                )
+                            }
                         }
                     }
                     }
@@ -531,11 +534,11 @@ fun RideScreen(
                     try {
                         ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                     } catch (_: Exception) { }
-                }) { Text("去开启", color = AvColors.cyan) }
+                }) { Text(stringResource(R.string.btn_enable), color = AvColors.cyan) }
             },
-            dismissButton = { TextButton(onClick = { gpsOff = false }) { Text("取消") } },
-            title = { Text("定位服务未开启") },
-            text = { Text("GPS 总开关没打开，运动轨迹将不会记录。\n请到系统设置的定位服务里开启后再按 GO。") }
+            dismissButton = { TextButton(onClick = { gpsOff = false }) { Text(stringResource(R.string.btn_cancel)) } },
+            title = { Text(stringResource(R.string.dlg_gps_title)) },
+            text = { Text(stringResource(R.string.dlg_gps_text)) }
         )
     }
 
@@ -948,11 +951,11 @@ private fun MainStatCard(
                     when (view.sport) {
                         SportType.RIDE -> {
                             big = "%.1f".format(view.speedKmh); unit = "km/h"
-                            sub = "均速 %.1f · 峰值 %.1f · %s".format(view.avgKmh, view.maxKmh, Coach.fmtDur(durMs))
+                            sub = stringResource(R.string.sub_avg_peak, view.avgKmh, view.maxKmh, Coach.fmtDur(durMs))
                         }
                         SportType.HIKE -> {
                             big = Coach.paceText(view.paceMinPerKm); unit = "min/km"
-                            sub = "时速 %.1f · %s".format(view.speedKmh, Coach.fmtDur(durMs))
+                            sub = stringResource(R.string.sub_speed, view.speedKmh, Coach.fmtDur(durMs))
                         }
                     }
                     Text(big, fontSize = if (isLive) 76.sp else 64.sp, fontWeight = FontWeight.Black,
@@ -1089,10 +1092,10 @@ private fun ControlRow(
                 }
                 StopButton(onStop)
                 Spacer(Modifier.width(16.dp))
-                RoundButton("暂停", false, 64, accent = MaterialTheme.colorScheme.onSurfaceVariant) { onPause() }
+                RoundButton(stringResource(R.string.btn_pause), false, 64, accent = MaterialTheme.colorScheme.onSurfaceVariant) { onPause() }
             }
             Phase.PAUSED -> {
-                RoundButton("继续", false, 64, accent = AvColors.cyan) { onResume() }
+                RoundButton(stringResource(R.string.btn_resume), false, 64, accent = AvColors.cyan) { onResume() }
                 Spacer(Modifier.width(16.dp))
                 StopButton(onStop)
             }
@@ -1266,7 +1269,7 @@ private fun WarmupButton(sport: SportType, modifier: Modifier = Modifier) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Text(s, style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(s), style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
@@ -1348,11 +1351,11 @@ private fun StopButton(onStop: () -> Unit) {
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
-                        Toast.makeText(ctx, "长按 2 秒结束，避免误触", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(ctx, ctx.getString(R.string.toast_hold_end), Toast.LENGTH_SHORT).show()
                     },
                     onPress = {
                         if (progress <= 0f) {
-                            tts.say("松手取消，长按两秒结束运动")
+                            tts.say(ctx.getString(R.string.tts_release_cancel))
                             val job = scope.launch {
                                 val t0 = System.currentTimeMillis()
                                 var lastSec = 0
@@ -1392,7 +1395,7 @@ private fun StopButton(onStop: () -> Unit) {
             }
         }
         Text(
-            "结束",
+            stringResource(R.string.btn_end),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.background
         )
@@ -1431,7 +1434,7 @@ private fun BackgroundLocHint() {
     }
     if (!hasBg) {
         Text(
-            "提示：锁屏后若轨迹中断，请到系统设置将本应用位置权限设为「始终允许」",
+            stringResource(R.string.hint_lock_gps),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -62,7 +62,7 @@ fun HistoryScreen(app: RideApp, onOpen: (Long) -> Unit, onBack: () -> Unit = {})
                 )
             }
             Text(
-                "运动记录",
+                stringResource(R.string.history_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -70,7 +70,7 @@ fun HistoryScreen(app: RideApp, onOpen: (Long) -> Unit, onBack: () -> Unit = {})
         if (rides.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    "还没有运动记录\n去骑行页开始第一趟吧",
+                    stringResource(R.string.history_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 22.sp

@@ -1,5 +1,6 @@
 package com.altivane.app.domain
 
+import com.altivane.app.R
 import kotlin.math.max
 
 /**
@@ -68,84 +69,72 @@ object Coach {
         }
     }
 
-    // TODO(i18n): TTS 播报文案暂为中文，多语言播报待后续
-    fun startMsg(sport: SportType): String = when (sport) {
-        SportType.RIDE -> "骑行开始，注意安全，先热身再发力"
-        SportType.HIKE -> "徒步开始，保持节奏，前两公里慢走热身"
+    // ---------- 播报文案（资源化：中英随应用语言） ----------
+
+    fun startMsgRes(sport: SportType): Int = when (sport) {
+        SportType.RIDE -> R.string.coach_start_ride
+        SportType.HIKE -> R.string.coach_start_hike
     }
 
-    fun kmMessage(idx: Int, splitMs: Long, sport: SportType, kcal: Double): String =
-        "第 $idx 公里，用时 ${fmtDur(splitMs)}，累计消耗 ${kcal.toInt()} 千卡" +
-                if (sport == SportType.HIKE) "，注意补充水分" else ""
+    fun kmHikeSuffixRes(sport: SportType): Int? =
+        if (sport == SportType.HIKE) R.string.coach_km_hike_suffix else null
 
-    /** TODO(i18n): 拼接句中的运动名暂为中文 */
-    private fun zhName(sport: SportType): String = when (sport) {
-        SportType.RIDE -> "骑行"
-        SportType.HIKE -> "徒步"
-    }
+    fun finishSummaryRes(sport: SportType): Int = R.string.coach_finish_fmt
 
-    fun finishSummary(
-        sport: SportType, distanceM: Double, movingMs: Long,
-        elevGainM: Double, kcal: Double
-    ): String =
-        "${zhName(sport)}结束，全程 ${"%.2f".format(distanceM / 1000.0)} 公里，" +
-                "用时 ${fmtDur(movingMs)}，" +
-                "消耗 ${kcal.toInt()} 千卡。辛苦了，记得拉伸放松"
-
-    // ---------- 实时建议（规则触发，带冷却由调用方控制） ----------
-
-    fun hrAdvice(zone: Int, sport: SportType): String? = when {
-        zone >= 5 -> "心率进入极限区间，建议降低强度，调整呼吸"
-        zone == 4 && sport == SportType.HIKE -> "心率偏高，上坡可以放缓步频"
+    fun hrAdviceRes(zone: Int, sport: SportType): Int? = when {
+        zone >= 5 -> R.string.coach_hr_zone5
+        zone == 4 && sport == SportType.HIKE -> R.string.coach_hr4_hike
         else -> null
     }
 
-    fun hydrateAdvice(minutes: Long): String =
-        "已连续运动 ${minutes / 60} 分钟，建议补水补盐"
+    fun hydrateRes(): Int = R.string.coach_hydrate_fmt
 
-    fun waypointMsg(label: String): String = "已打卡：$label"
+    fun wpMsgRes(): Int = R.string.coach_wp_fmt
 
-    // ---------- 事前热身 / 事后拉伸 ----------
+    // ---------- 事前热身 / 事后拉伸（资源化） ----------
 
     val warmupRide = listOf(
-        "肩颈环绕 30 秒，放松上肢",
-        "高抬腿原地 30 秒激活心率",
-        "弓步压腿每侧 20 秒，激活髋部",
-        "手腕脚踝环绕各 10 圈",
-        "第一公里用低强度骑完再提速"
+        R.string.warmup_ride_1,
+        R.string.warmup_ride_2,
+        R.string.warmup_ride_3,
+        R.string.warmup_ride_4,
+        R.string.warmup_ride_5
     )
 
     val warmupHike = listOf(
-        "脚踝环绕每侧 15 圈，山路防崴脚",
-        "弓步压腿每侧 20 秒",
-        "肩背拉伸 30 秒，调整背包肩带",
-        "原地小跳 20 次激活小腿",
-        "前两公里慢走热身，再进入正常步频"
+        R.string.warmup_hike_1,
+        R.string.warmup_hike_2,
+        R.string.warmup_hike_3,
+        R.string.warmup_hike_4,
+        R.string.warmup_hike_5
     )
 
     val stretchRide = listOf(
-        "股四头肌站立拉伸，每侧 30 秒",
-        "腘绳肌前屈拉伸，每侧 30 秒",
-        "小腿后侧拉伸，每侧 30 秒",
-        "肩颈与背部伸展 1 分钟",
-        "补充蛋白质与水分"
+        R.string.stretch_ride_1,
+        R.string.stretch_ride_2,
+        R.string.stretch_ride_3,
+        R.string.stretch_ride_4,
+        R.string.stretch_ride_5
     )
 
     val stretchHike = listOf(
-        "小腿腓肠肌拉伸，每侧 40 秒（下坡重点）",
-        "大腿前侧与后侧拉伸各 30 秒",
-        "臀部梨状肌拉伸，每侧 30 秒",
-        "脚底筋膜放松，踩踩滚轴或水瓶",
-        "热水泡脚缓解足部疲劳"
+        R.string.stretch_hike_1,
+        R.string.stretch_hike_2,
+        R.string.stretch_hike_3,
+        R.string.stretch_hike_4,
+        R.string.stretch_hike_5
     )
 
-    fun warmup(sport: SportType): List<String> = when (sport) {
+    fun warmup(sport: SportType): List<Int> = when (sport) {
         SportType.RIDE -> warmupRide
         SportType.HIKE -> warmupHike
     }
 
-    fun stretch(sport: SportType): List<String> = when (sport) {
+    fun stretch(sport: SportType): List<Int> = when (sport) {
         SportType.RIDE -> stretchRide
         SportType.HIKE -> stretchHike
     }
 }
+
+/** 教练播报事件：资源 id + 格式参数（调用方 getString 后送 TTS） */
+data class CoachEvent(val resId: Int, val args: List<Any> = emptyList())

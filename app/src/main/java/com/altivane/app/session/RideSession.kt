@@ -1,6 +1,7 @@
 package com.altivane.app.session
 
 import com.altivane.app.domain.Coach
+import com.altivane.app.domain.CoachEvent
 import com.altivane.app.domain.KmSplit
 import com.altivane.app.domain.LiveState
 import com.altivane.app.domain.Phase
@@ -52,11 +53,11 @@ class RideSession {
     )
     val kmEvents: SharedFlow<KmSplit> = _kmEvents
 
-    /** AI 教练事件（实时建议 / 打卡确认 / 滑雪趟完成播报） */
-    private val _coachEvents = MutableSharedFlow<String>(
+    /** AI 教练事件（实时建议 / 打卡确认 / 滑雪趟完成播报）：资源 id + 参数，调用方 getString */
+    private val _coachEvents = MutableSharedFlow<CoachEvent>(
         extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-    val coachEvents: SharedFlow<String> = _coachEvents
+    val coachEvents: SharedFlow<CoachEvent> = _coachEvents
 
     /** 刚结束的 rideId（UI 弹拉伸清单用），0 = 无 */
     private val _lastFinished = MutableStateFlow(0L)
@@ -210,8 +211,8 @@ class RideSession {
         if (zone >= 4) {
             if (zone5Since == 0L) zone5Since = now
             if (now - zone5Since > 30_000 && now - lastHrAdviceT > 180_000) {
-                Coach.hrAdvice(zone, s.sport)?.let {
-                    _coachEvents.tryEmit(it)
+                Coach.hrAdviceRes(zone, s.sport)?.let {
+                    _coachEvents.tryEmit(CoachEvent(it))
                     lastHrAdviceT = now
                 }
             }
@@ -219,7 +220,7 @@ class RideSession {
             zone5Since = 0
         }
         if (s.movingMs > 45 * 60_000 && now - lastHydrateT > 45 * 60_000) {
-            _coachEvents.tryEmit(Coach.hydrateAdvice(s.movingMs / 60_000))
+            _coachEvents.tryEmit(CoachEvent(Coach.hydrateRes(), listOf((s.movingMs / 60_000).toInt())))
             lastHydrateT = now
         }
     }
@@ -229,7 +230,7 @@ class RideSession {
         val wp = Waypoint(p.t, p.lat, p.lon, p.ele, kind, label, photo)
         _waypoints.value = _waypoints.value + wp
         _state.value = _state.value.copy(waypointCount = _waypoints.value.size)
-        if (kind == "M") _coachEvents.tryEmit(Coach.waypointMsg(label))
+        if (kind == "M") _coachEvents.tryEmit(CoachEvent(Coach.wpMsgRes(), listOf(label)))
     }
 
     fun setHeading(deg: Float, has: Boolean) {

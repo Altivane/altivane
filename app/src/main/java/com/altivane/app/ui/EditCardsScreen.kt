@@ -171,7 +171,7 @@ fun EditCardsScreen(app: RideApp, onBack: () -> Unit) {
                         order = order.filter { it != t }
                         saveCards(ctx, s.sport, order)
                     },
-                    value = cardValue(t, s),
+                    value = cardValue(t, s, androidx.compose.ui.platform.LocalContext.current),
                     hint = "长按拖动"
                 )
             }
@@ -194,7 +194,7 @@ fun EditCardsScreen(app: RideApp, onBack: () -> Unit) {
                         order = order + t
                         saveCards(ctx, s.sport, order)
                     },
-                    value = cardValue(t, s),
+                    value = cardValue(t, s, androidx.compose.ui.platform.LocalContext.current),
                     hint = ""
                 )
             }
@@ -279,14 +279,14 @@ private fun DashboardCell(
                 maxLines = 1
             )
             Text(
-                if (value.first.isEmpty()) "实时渲染" else value.first,
+                if (value.first.isEmpty()) stringResource(R.string.live_render) else value.first,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1
             )
             Text(
                 when {
-                    t == CardType.COMPASS || t == CardType.TRACK || t == CardType.PROFILE -> "首页卡片实时渲染"
+                    t == CardType.COMPASS || t == CardType.TRACK || t == CardType.PROFILE -> stringResource(R.string.live_render_home)
                     hint.isNotEmpty() -> hint
                     else -> value.second
                 },

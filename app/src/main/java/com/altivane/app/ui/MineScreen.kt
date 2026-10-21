@@ -109,18 +109,18 @@ fun MineScreen(
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        profile.name.ifEmpty { "Altivane 用户" },
+                        profile.name.ifEmpty { stringResource(R.string.default_user) },
                         style = MaterialTheme.typography.titleMedium
                     )
                     val extra = listOfNotNull(
-                        if (profile.age > 0) "${profile.age}岁" else null,
+                        if (profile.age > 0) stringResource(R.string.age_fmt, profile.age) else null,
                         if (profile.heightCm > 0) "${profile.heightCm}cm" else null,
                         if (profile.weightKg > 0) "%.0fkg".format(profile.weightKg) else null,
-                        if (profile.blood.isNotEmpty()) "${profile.blood}型" else null
+                        if (profile.blood.isNotEmpty()) stringResource(R.string.blood_fmt, profile.blood) else null
                     ).joinToString(" · ")
                     Text(
-                        if (extra.isEmpty()) "累计 %.2f km".format(totalKm) + " · ${rides.size} 次 · ${totalMin / 60} 小时"
-                        else "$extra · 累计 %.2f km".format(totalKm),
+                        if (extra.isEmpty()) stringResource(R.string.profile_total, totalKm, rides.size, totalMin / 60)
+                        else stringResource(R.string.profile_total_extra, extra, totalKm),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -131,21 +131,21 @@ fun MineScreen(
 
         // 统计三卡
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCard("总里程", "%.0f".format(totalKm), "km", AvColors.blue, Modifier.weight(1f))
-            StatCard("总时长", "${totalMin / 60}h", "", AvColors.cyan, Modifier.weight(1f))
-            StatCard("总消耗", "${rides.sumOf { it.kcal }.toInt()}", "kcal", AvColors.pink, Modifier.weight(1f))
+            StatCard(stringResource(R.string.stat_total_km), "%.0f".format(totalKm), "km", AvColors.blue, Modifier.weight(1f))
+            StatCard(stringResource(R.string.stat_total_dur), "${totalMin / 60}h", "", AvColors.cyan, Modifier.weight(1f))
+            StatCard(stringResource(R.string.lbl_total_cals), "${rides.sumOf { it.kcal }.toInt()}", "kcal", AvColors.pink, Modifier.weight(1f))
         }
 
         // 菜单
         val menus: List<Triple<String, String, () -> Unit>> = listOf(
-            Triple("全部记录", "每次运动的轨迹与数据", onOpenHistory),
-            Triple("我的路线", "内置经典线路 · 热门路线", onOpenRoutes),
-            Triple("我的成就", "里程碑 · 三山五岳 · 打卡景点", onOpenAchievements),
-            Triple("年度报告", "今年运动数据一览", onOpenReport),
-            Triple("我的收藏", "收藏的路线与记录", {
-                Toast.makeText(ctx, "收藏功能开发中", Toast.LENGTH_SHORT).show()
+            Triple(stringResource(R.string.menu_history), stringResource(R.string.menu_history_sub), onOpenHistory),
+            Triple(stringResource(R.string.menu_routes), stringResource(R.string.menu_routes_sub), onOpenRoutes),
+            Triple(stringResource(R.string.menu_achv), stringResource(R.string.menu_achv_sub), onOpenAchievements),
+            Triple(stringResource(R.string.menu_report), stringResource(R.string.menu_report_sub), onOpenReport),
+            Triple(stringResource(R.string.menu_fav), stringResource(R.string.menu_routes_sub), {
+                Toast.makeText(ctx, ctx.getString(R.string.toast_fav_todo), Toast.LENGTH_SHORT).show()
             }),
-            Triple("设置", "主题 · 蓝牙外设 · 保活 · 关于", onOpenMore)
+            Triple(stringResource(R.string.menu_settings), stringResource(R.string.menu_settings_sub), onOpenMore)
         )
         menus.forEach { (title, sub, action) ->
             Box(
@@ -208,10 +208,10 @@ fun RoutesScreen(onBack: () -> Unit, onOpen: (Int) -> Unit) {
                     tint = MaterialTheme.colorScheme.onBackground)
             }
             Column {
-                Text("我的路线", style = MaterialTheme.typography.headlineMedium,
+                Text(stringResource(R.string.menu_routes), style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
                 Text(
-                    "内置经典线路 · 示意 GPS",
+                    stringResource(R.string.routes_sub),
                     style = MaterialTheme.typography.labelMedium,
                     color = AvColors.green
                 )
@@ -223,9 +223,9 @@ fun RoutesScreen(onBack: () -> Unit, onOpen: (Int) -> Unit) {
                     val d = com.altivane.app.domain.RideStats.haversine(
                         it.latitude, it.longitude, r.pts.first().lat, r.pts.first().lon
                     )
-                    if (d >= 1000.0) "距您 %.0f km".format(d / 1000.0)
-                    else "距您 %.0f m".format(d)
-                } ?: "距您 --"
+                    if (d >= 1000.0) stringResource(R.string.dist_km_fmt, d / 1000.0)
+                    else stringResource(R.string.dist_m_fmt, d)
+                } ?: stringResource(R.string.dist_none)
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -244,7 +244,7 @@ fun RoutesScreen(onBack: () -> Unit, onOpen: (Int) -> Unit) {
                             }
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                "$distTxt · ${r.region} · 主峰 ${r.summitEle.toInt()} m · ${r.distKm} km",
+                                "$distTxt · ${r.region} · ${stringResource(R.string.summit_fmt, r.summitEle)} · ${r.distKm} km",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -263,10 +263,10 @@ fun RoutesScreen(onBack: () -> Unit, onOpen: (Int) -> Unit) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("当地热门路线", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.local_routes), style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                "即将上线：基于你所在城市的运动热力推荐",
+                                stringResource(R.string.routes_soon),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -354,7 +354,7 @@ fun RouteDetailScreen(idx: Int, onBack: () -> Unit) {
         GlassCard(Modifier.height(90.dp), accent = AvColors.orange) {
             Column(Modifier.fillMaxSize()) {
                 Text(
-                    "海拔剖面：${r.pts.first().ele.toInt()} m → ${r.summitEle.toInt()} m",
+                    stringResource(R.string.profile_fmt, r.pts.first().ele.toInt(), r.summitEle.toInt()),
                     style = MaterialTheme.typography.labelMedium,
                     color = dim
                 )
@@ -368,17 +368,15 @@ fun RouteDetailScreen(idx: Int, onBack: () -> Unit) {
         // 信息卡
         GlassCard(accent = AvColors.green) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("线路信息", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.route_info), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "主峰海拔 ${r.summitEle.toInt()} m\n" +
-                            "全程约 ${r.distKm} km\n" +
-                            "参考登顶 ${r.hours} 小时\n" +
-                            r.note,
+                    stringResource(R.string.route_info_fmt, r.summitEle, "${r.distKm}", r.hours) +
+                            "\n" + r.note,
                     style = MaterialTheme.typography.bodyMedium,
                     color = dim
                 )
                 Text(
-                    "提示：坐标为经典线路简化示意，实爬请开启徒步模式记录",
+                    stringResource(R.string.route_hint),
                     style = MaterialTheme.typography.labelMedium,
                     color = AvColors.yellow
                 )

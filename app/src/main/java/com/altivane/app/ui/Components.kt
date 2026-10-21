@@ -228,17 +228,9 @@ fun StatCard(
     }
 }
 
-/** 航向 → 8 向方位名（中文 + 英文缩写），供罗盘各处显示 */
-fun headingName(h: Float): String {
-    val cn = listOf("北", "东北", "东", "东南", "南", "西南", "西", "西北")
-    val en = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
-    val i = (((h % 360) + 360) % 360 / 45f + 0.5f).toInt() % 8
-    return "${cn[i]} ${en[i]}"
-}
-
 /**
  * 罗盘（量子环版）：外圈青色扫描弧 + 细密刻度环 + 主刻度环 + 直立方位字母（N 红）
- * + 红色 N 标随盘转 + 顶部固定青色索引线 + 中心航向数字/方位名。
+ * + 红色 N 标随盘转 + 顶部固定青色索引线 + 中心航向数字。
  * showCenter=false 时为 mini 盘（无中心读数，用于扁卡右侧）。
  */
 @Composable
@@ -314,7 +306,7 @@ fun CompassDial(heading: Float, modifier: Modifier = Modifier, showCenter: Boole
             }
         }
         if (showCenter) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(contentAlignment = Alignment.Center) {
                 Text(
                     "${heading.toInt()}°",
                     style = MaterialTheme.typography.headlineMedium.copy(
@@ -322,7 +314,6 @@ fun CompassDial(heading: Float, modifier: Modifier = Modifier, showCenter: Boole
                     ),
                     color = fg
                 )
-                Text(headingName(heading), fontSize = 9.sp, color = dim)
             }
         }
     }

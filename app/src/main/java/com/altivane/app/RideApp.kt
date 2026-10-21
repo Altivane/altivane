@@ -17,6 +17,11 @@ class RideApp : Application() {
     lateinit var ble: BleManager
     val session = RideSession()
 
+    /** 应用内语言包装（Service/小部件经 app context 取词跟随同一语言） */
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(com.altivane.app.domain.AppLang.wrap(base))
+    }
+
     /** App 级协程：BLE 数据 → Session 全局桥接 */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

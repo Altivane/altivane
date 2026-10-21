@@ -150,7 +150,7 @@ fun ShareScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                 )
             }
             Text(
-                "分享",
+                stringResource(R.string.share_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -160,7 +160,7 @@ fun ShareScreen(app: RideApp, id: Long, onBack: () -> Unit) {
             bmp?.let {
                 Image(
                     it.asImageBitmap(),
-                    contentDescription = "分享图",
+                    contentDescription = stringResource(R.string.share_img_cd),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 )
@@ -175,12 +175,14 @@ fun ShareScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                     .glassCard(dark)
                     .clickable {
                         val b = bmp ?: return@clickable
+                        val okMsg = ctx.getString(R.string.toast_saved)
+                        val failMsg = ctx.getString(R.string.toast_save_failed)
                         scope.launch(Dispatchers.IO) {
                             val ok = saveToGallery(ctx, b)
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(
                                     ctx,
-                                    if (ok) "已保存到相册 Pictures/Altivane" else "保存失败",
+                                    if (ok) okMsg else failMsg,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -189,7 +191,7 @@ fun ShareScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "保存到相册",
+                    stringResource(R.string.btn_save_album),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -212,7 +214,7 @@ fun ShareScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "系统分享",
+                    stringResource(R.string.btn_system_share),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )

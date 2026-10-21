@@ -18,7 +18,6 @@ import com.altivane.app.RideApp
 import com.altivane.app.service.SosTorchService
 import com.altivane.app.ui.TrackGeom
 import com.altivane.app.ui.TrackPt
-import com.altivane.app.ui.headingName
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -50,7 +49,7 @@ class CompassWidget : AppWidgetProvider() {
             val rv = RemoteViews(ctx.packageName, R.layout.widget_compass_big).apply {
                 setInt(R.id.wcRoot, "setBackgroundResource", t.bgRes)
                 setImageViewBitmap(R.id.wcDial, bmp)
-                setTextViewText(R.id.wcValue, "%.0f° %s".format(deg, headingName(deg)))
+                setTextViewText(R.id.wcValue, "%.0f°".format(deg))
                 setTextColor(R.id.wcValue, accentColor(t, 0xFF2DD4BF.toInt(), 0xFF0F766E.toInt()))
             }
             rv.setOnClickPendingIntent(
@@ -196,7 +195,7 @@ class TrackWidget : AppWidgetProvider() {
             } else {
                 rv.setViewVisibility(R.id.wtTrack, android.view.View.GONE)
                 rv.setViewVisibility(R.id.wtEmpty, android.view.View.VISIBLE)
-                rv.setTextViewText(R.id.wtEmpty, "开始运动后显示全程轨迹")
+                rv.setTextViewText(R.id.wtEmpty, ctx.getString(com.altivane.app.R.string.wt_empty))
                 rv.setTextColor(R.id.wtEmpty, t.labelColor)
             }
             rv.setOnClickPendingIntent(
@@ -283,13 +282,13 @@ class SosWidget : AppWidgetProvider() {
             val on = SosTorchService.running
             val rv = RemoteViews(ctx.packageName, R.layout.widget_sos)
             rv.setInt(R.id.wsRoot, "setBackgroundResource", t.bgRes)
-            rv.setTextViewText(R.id.wsTitle, if (on) "SOS 闪烁中" else "SOS 手电筒")
+            rv.setTextViewText(R.id.wsTitle, ctx.getString(if (on) com.altivane.app.R.string.sos_on else com.altivane.app.R.string.sos_off))
             rv.setTextColor(
                 R.id.wsTitle,
                 if (on) accentColor(t, 0xFFFF5252.toInt(), 0xFFB91C1C.toInt())
                 else accentColor(t, 0xFFFF5252.toInt(), 0xFFB91C1C.toInt())
             )
-            rv.setTextViewText(R.id.wsSub, if (on) "点击停止闪光" else "点击开手电筒 · 三短三长三短")
+            rv.setTextViewText(R.id.wsSub, ctx.getString(if (on) com.altivane.app.R.string.sos_on_tap else com.altivane.app.R.string.sos_off_sub))
             rv.setTextColor(R.id.wsSub, t.labelColor)
             rv.setOnClickPendingIntent(
                 R.id.wsRoot,

@@ -187,14 +187,14 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                                         .padding(horizontal = 10.dp, vertical = 4.dp)
                                 ) {
                                     Text(
-                                        "较上次 %s%.2f km".format(if (up) "+" else "", dKm),
+                                        stringResource(R.string.vs_prev_km, if (up) "+" else "", dKm),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = AvColors.onColor(if (up) AvColors.green else AvColors.orange)
                                     )
                                 }
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    "上次 %.2f km · %s".format(p.distanceM / 1000.0, fmtDate(p.startTime)),
+                                    stringResource(R.string.last_km_fmt, p.distanceM / 1000.0, fmtDate(p.startTime)),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -206,36 +206,36 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                 // ② 数据格 2×3（核心 / 进阶；骑/徒按运动类型换指标）
                 val statH = 88.dp
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatCard("时长", fmtCardDur(r.movingS * 1000L), "", AvColors.yellow, Modifier.weight(1f).height(statH))
+                    StatCard(stringResource(R.string.card_duration), fmtCardDur(r.movingS * 1000L), "", AvColors.yellow, Modifier.weight(1f).height(statH))
                     if (sport == SportType.RIDE) {
-                        StatCard("均速", "%.1f".format(r.avgKmh), "km/h", AvColors.green, Modifier.weight(1f).height(statH))
+                        StatCard(stringResource(R.string.stat_avg), "%.1f".format(r.avgKmh), "km/h", AvColors.green, Modifier.weight(1f).height(statH))
                     } else {
                         StatCard(
-                            "配速",
+                            stringResource(R.string.card_pace),
                             if (r.avgKmh > 0.1) Coach.paceText(60.0 / r.avgKmh) else "--",
                             "min/km", AvColors.green, Modifier.weight(1f).height(statH)
                         )
                     }
-                    StatCard("消耗", r.kcal.toInt().toString(), "kcal", AvColors.pink, Modifier.weight(1f).height(statH))
+                    StatCard(stringResource(R.string.card_cals), r.kcal.toInt().toString(), "kcal", AvColors.pink, Modifier.weight(1f).height(statH))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatCard("爬升", "%.0f".format(r.elevGainM), "m", AvColors.orange, Modifier.weight(1f).height(statH))
+                    StatCard(stringResource(R.string.lbl_climb), "%.0f".format(r.elevGainM), "m", AvColors.orange, Modifier.weight(1f).height(statH))
                     if (sport == SportType.RIDE) {
                         // 最慢公里：全程逐公里配速中最慢的一段
                         StatCard(
-                            "最慢公里",
+                            stringResource(R.string.lbl_slowest_km),
                             remember(rpts) { RideStats.kmPaces(rpts).maxOrNull()?.let { Coach.paceText(it) } ?: "--" },
                             "min/km", AvColors.violet, Modifier.weight(1f).height(statH)
                         )
                     } else {
                         // 步数：里程 ÷ 0.72 m（成人通用步长估算，仅徒步）
                         StatCard(
-                            "步数",
+                            stringResource(R.string.lbl_steps),
                             if (km > 0.05) "%d".format((km * 1000 / 0.72).toInt()) else "--",
-                            "步", AvColors.violet, Modifier.weight(1f).height(statH)
+                            "", AvColors.violet, Modifier.weight(1f).height(statH)
                         )
                     }
-                    StatCard("峰值", "%.1f".format(r.maxKmh), "km/h", AvColors.blue, Modifier.weight(1f).height(statH))
+                    StatCard(stringResource(R.string.stat_peak), "%.1f".format(r.maxKmh), "km/h", AvColors.blue, Modifier.weight(1f).height(statH))
                 }
 
                 // ③ 心率曲线（有心率数据才显示）：逐点 BPM + 标尺
@@ -244,25 +244,25 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    "心率",
+                                    stringResource(R.string.card_hr),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    "BPM · 全程逐点",
+                                    stringResource(R.string.hr_chart_sub),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(Modifier.weight(1f))
                                 Text(
-                                    "平均 %d".format(hrList.average().toInt()),
+                                    stringResource(R.string.hr_avg_fmt, hrList.average().toInt()),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = AvColors.onColor(AvColors.pink)
                                 )
                                 Spacer(Modifier.width(10.dp))
                                 Text(
-                                    "峰值 %d".format(hrList.max().toInt()),
+                                    stringResource(R.string.hr_peak_fmt, hrList.max().toInt()),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = AvColors.onColor(AvColors.red)
                                 )
@@ -287,25 +287,25 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    "海拔剖面",
+                                    stringResource(R.string.profile_detail),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    "颜色低→高渐变",
+                                    stringResource(R.string.profile_sub),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(Modifier.weight(1f))
                                 Text(
-                                    "↑ 最高 %.0f m".format(eleList.max()),
+                                    stringResource(R.string.ele_max_fmt, eleList.max()),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = AvColors.onColor(AvColors.green)
                                 )
                                 Spacer(Modifier.width(10.dp))
                                 Text(
-                                    "↓ 最低 %.0f m".format(eleList.min()),
+                                    stringResource(R.string.ele_min_fmt, eleList.min()),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = AvColors.onColor(AvColors.cyan)
                                 )
@@ -324,9 +324,9 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                 // ⑥ 运动解读卡：自动生成的文字报告（对比 / 配速 / 爬升 / 心率强度）
                 GlassCard(accent = AvColors.cyan.copy(alpha = 0.5f)) {
                     Column {
-                        CardTitleRow("运动解读", AvColors.cyan)
+                        CardTitleRow(stringResource(R.string.report_title), AvColors.cyan)
                         Spacer(Modifier.height(8.dp))
-                        reportLines(r, prev, km, hrList, stringResource(sportOf(r).labelRes)).forEach { line ->
+                        reportLines(r, prev, km, hrList, stringResource(sportOf(r).labelRes), ctx).forEach { line ->
                             Row(Modifier.padding(vertical = 3.dp)) {
                                 Box(
                                     Modifier
@@ -401,7 +401,7 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                                     val gpx = GpxExporter.buildGpx(name, pts, wps)
                                     val f = GpxExporter.save(ctx, "$name.gpx", gpx)
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(ctx, "GPX 已导出（含打卡点）", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(ctx, ctx.getString(R.string.toast_gpx_done), Toast.LENGTH_SHORT).show()
                                         shareFile(ctx, f, "application/gpx+xml")
                                     }
                                 }
@@ -409,7 +409,7 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "导出 GPX",
+                            stringResource(R.string.btn_export_gpx),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onBackground
                         )
@@ -430,7 +430,7 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                "生成分享图",
+                                stringResource(R.string.btn_share_image),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
@@ -459,7 +459,7 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         Modifier.fillMaxSize(),
                         contentScale = androidx.compose.ui.layout.ContentScale.Fit
                     )
-                } ?: Text("加载中…", color = Color.White)
+                } ?: Text(stringResource(R.string.loading), color = Color.White)
             }
         }
     }
@@ -487,7 +487,8 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
 
 /** 运动解读文案：对比上次 / 速度配速 / 爬升海拔 / 心率强度判读 */
 private fun reportLines(
-    r: RideEntity, prev: RideEntity?, km: Double, hrList: List<Double>, sportName: String
+    r: RideEntity, prev: RideEntity?, km: Double, hrList: List<Double>, sportName: String,
+    ctx: android.content.Context
 ): List<String> {
     val sport = sportOf(r)
     val lines = mutableListOf<String>()
@@ -495,35 +496,34 @@ private fun reportLines(
     if (prev != null) {
         val prevKm = prev.distanceM / 1000.0
         val d = km - prevKm
-        // TODO(i18n): 运动报告长尾文案五语化（含数字格式占位）
-        lines += "本次$sportName %.2f km，较上次%s%.2f km（上次 %.2f km）".format(
-            km, if (d >= 0) "+" else "", abs(d), prevKm
+        lines += ctx.getString(
+            R.string.rep_vs_prev, sportName, km, if (d >= 0) "+" else "", abs(d), prevKm
         )
-        lines += "移动用时 %s，上次 %s".format(
-            fmtCardDur(r.movingS * 1000L), fmtCardDur(prev.movingS * 1000L)
+        lines += ctx.getString(
+            R.string.rep_moving_vs, fmtCardDur(r.movingS * 1000L), fmtCardDur(prev.movingS * 1000L)
         )
     } else {
-        lines += "本次$sportName %.2f km，移动用时 %s".format(km, fmtCardDur(r.movingS * 1000L))
+        lines += ctx.getString(R.string.rep_first, sportName, km, fmtCardDur(r.movingS * 1000L))
     }
     // ② 速度 / 配速
     if (sport == SportType.RIDE) {
-        lines += "均速 %.1f km/h，峰值 %.1f km/h".format(r.avgKmh, r.maxKmh)
+        lines += ctx.getString(R.string.rep_avg_peak, r.avgKmh, r.maxKmh)
     } else {
         val pace = if (r.avgKmh > 0.1) Coach.paceText(60.0 / r.avgKmh) else "--"
-        lines += "平均配速 %s min/km，峰值时速 %.1f km/h".format(pace, r.maxKmh)
+        lines += ctx.getString(R.string.rep_pace, pace, r.maxKmh)
     }
     // ③ 爬升 / 海拔 / 消耗
-    lines += "累计爬升 %.0f m，最高海拔 %.0f m，消耗 %d kcal".format(r.elevGainM, r.maxAltM, r.kcal.toInt())
+    lines += ctx.getString(R.string.rep_climb_elev_cal, r.elevGainM, r.maxAltM, r.kcal.toInt())
     // ④ 心率强度判读：平均心率占本次峰值的比例
     if (hrList.size >= 2) {
         val avg = hrList.average()
         val max = hrList.max()
         val verdict = when {
-            avg / max < 0.75 -> "强度以有氧耐力为主，心率余量充足"
-            avg / max < 0.88 -> "中高强度节奏，接近乳酸阈，注意补给与恢复"
-            else -> "高强度输出，平均心率接近本次峰值，注意身体反馈"
+            avg / max < 0.75 -> ctx.getString(R.string.rep_hr_aero)
+            avg / max < 0.88 -> ctx.getString(R.string.rep_hr_lactate)
+            else -> ctx.getString(R.string.rep_hr_hard)
         }
-        lines += "心率平均 %d bpm、最高 %d bpm：%s".format(avg.toInt(), max.toInt(), verdict)
+        lines += ctx.getString(R.string.rep_hr_fmt, avg.toInt(), max.toInt(), verdict)
     }
     return lines
 }
@@ -562,7 +562,7 @@ fun shareFile(ctx: android.content.Context, f: File, mime: String) {
     } catch (e: Exception) {
         // 路径不在 FileProvider 白名单等场景：提示而非闪退
         android.widget.Toast.makeText(
-            ctx, "分享失败：${e.message}", android.widget.Toast.LENGTH_SHORT
+            ctx, ctx.getString(R.string.toast_share_fail, e.message ?: "-"), android.widget.Toast.LENGTH_SHORT
         ).show()
         com.altivane.app.domain.AppLog.e("Share", "shareFile ${f.name} failed", e)
     }

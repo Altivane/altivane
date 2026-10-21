@@ -131,14 +131,18 @@ class RideRecordingService : Service() {
             launch {
                 app.session.kmEvents.collect {
                     val s = app.session.state.value
-                    tts?.say(Coach.kmMessage(it.index, it.splitMs, s.sport, s.kcal))
+                    val msg = getString(R.string.coach_km_fmt, it.index, Coach.fmtDur(it.splitMs), s.kcal.toInt()) +
+                            (Coach.kmHikeSuffixRes(s.sport)?.let { res -> getString(res) } ?: "")
+                    tts?.say(msg)
                 }
             }
             launch {
-                app.session.coachEvents.collect { tts?.say(it) }
+                app.session.coachEvents.collect { ev ->
+                    tts?.say(getString(ev.resId, *ev.args.toTypedArray()))
+                }
             }
         }
-        tts?.say(Coach.startMsg(sport))
+        tts?.say(getString(Coach.startMsgRes(sport)))
 
         // 运动开始：把记住的 BLE 设备挂上（若已连接则跳过；autoConnect 兜底）
         app.ble.reconnectSaved()
@@ -270,8 +274,12 @@ class RideRecordingService : Service() {
     private fun stopRide() {
         if (!stopping.compareAndSet(false, true)) return
         val s0 = app.session.state.value
-        val summary = Coach.finishSummary(
-            s0.sport, s0.distanceM, s0.movingMs, s0.elevGainM, s0.kcal
+        val summary = getString(
+            Coach.finishSummaryRes(s0.sport),
+            getString(s0.sport.labelRes),
+            "%.2f".format(s0.distanceM / 1000.0),
+            Coach.fmtDur(s0.movingMs),
+            s0.kcal.toInt()
         )
         tts?.say(summary)
         scope.launch {
@@ -329,7 +337,8 @@ class RideRecordingService : Service() {
             Phase.IDLE -> "Altivane"
         }
         val text = "%.2f km · %.1f km/h".format(s.distanceM / 1000.0, s.speedKmh)
-        val big = "速度 %.1f km/h    心率 %s 次/分\n里程 %.2f km    消耗 %d kcal    海拔 %.0f m".format(
+        val big = getString(
+            R.string.notif_big_fmt,
             s.speedKmh,
             if (s.hr > 0) s.hr.toString() else "--",
             s.distanceM / 1000.0,
@@ -344,7 +353,7 @@ class RideRecordingService : Service() {
             .setContentIntent(pi)
             .setOngoing(true)                       // Promoted 资格
             .setOnlyAlertOnce(true)
-            .addAction(0, "停止", stopIntent)       // 非 colorized / 无 RemoteViews ✓
+            .addAction(0, getString(R.string.btn_stop), stopIntent)       // 非 colorized / 无 RemoteViews ✓
         if (android.os.Build.VERSION.SDK_INT >= 36) {
             // Live Updates：进度条（5km 一档里程碑）+ 显式请求系统提升（锁屏大卡/状态栏 chip）
             val dist = s.distanceM
