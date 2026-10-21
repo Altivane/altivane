@@ -348,7 +348,7 @@
     <string name="routes_soon">Coming soon: heat-based route picks for your city</string>
     <string name="profile_fmt">Elevation: %1$d m → %2$d m</string>
     <string name="route_info">Route Info</string>
-    <string name="route_info_fmt">Summit %1$.0f m\nAbout %2$s km\nTypical summit %3$d h</string>
+    <string name="route_info_fmt">Summit %1$.0f m\nAbout %2$s km\nTypical summit %3$.0f h</string>
     <string name="route_hint">Note: coordinates are simplified classic lines — record with Hike mode on the real climb</string>
 
     <string name="history_title">History</string>

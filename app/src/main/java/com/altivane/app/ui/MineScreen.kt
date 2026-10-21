@@ -354,7 +354,11 @@ fun RouteDetailScreen(idx: Int, onBack: () -> Unit) {
         GlassCard(Modifier.height(90.dp), accent = AvColors.orange) {
             Column(Modifier.fillMaxSize()) {
                 Text(
-                    stringResource(R.string.profile_fmt, r.pts.first().ele.toInt(), r.summitEle.toInt()),
+                    stringResource(
+                        R.string.profile_fmt,
+                        line.pts.first().ele.toInt(),
+                        line.pts.maxOf { it.ele }.toInt()
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = dim
                 )

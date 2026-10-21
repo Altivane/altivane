@@ -362,7 +362,7 @@
     <string name="routes_soon">即将上线：基于你所在城市的运动热力推荐</string>
     <string name="profile_fmt">海拔剖面：%1$d m → %2$d m</string>
     <string name="route_info">线路信息</string>
-    <string name="route_info_fmt">主峰海拔 %1$.0f m\n全程约 %2$s km\n参考登顶 %3$d 小时</string>
+    <string name="route_info_fmt">主峰海拔 %1$.0f m\n全程约 %2$s km\n参考登顶 %3$.0f 小时</string>
     <string name="route_hint">提示：坐标为经典线路简化示意，实爬请开启徒步模式记录</string>
 
     <!-- 历史 -->

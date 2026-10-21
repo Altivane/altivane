@@ -38,6 +38,41 @@ mask = C.multiply(
 # 去噪：中值滤波去孤立点（5x5 清 JPEG 噪散点）+ 1px 羽化边缘
 mask = mask.filter(ImageFilter.MedianFilter(5)).filter(ImageFilter.MedianFilter(3)).filter(ImageFilter.GaussianBlur(0.8))
 
+# v0.8.45：删除纸飞机右下的两条速度线（用户指定）。
+# 速度线是与机身/山峰分离的独立连通成分——8 连通域标记后，
+# 删除"完全落在右下区域（x>0.53w, y>0.62h）且面积 <18000px"的成分，
+# 机身（bbox 跨上半区）与绿山（y 从 0.56h 起）天然不满足条件。
+ml = mask.load()
+visited = bytearray(w * h)
+removed_px = 0
+for sy in range(h):
+    for sx in range(w):
+        if visited[sy * w + sx] or ml[sx, sy] == 0:
+            continue
+        stack = [(sx, sy)]
+        visited[sy * w + sx] = 1
+        pix = []
+        minx = maxx = sx
+        miny = maxy = sy
+        while stack:
+            x0, y0 = stack.pop()
+            pix.append((x0, y0))
+            if x0 < minx: minx = x0
+            if x0 > maxx: maxx = x0
+            if y0 < miny: miny = y0
+            if y0 > maxy: maxy = y0
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    nx, ny = x0 + dx, y0 + dy
+                    if 0 <= nx < w and 0 <= ny < h and not visited[ny * w + nx] and ml[nx, ny] != 0:
+                        visited[ny * w + nx] = 1
+                        stack.append((nx, ny))
+        if minx > w * 0.53 and miny > h * 0.62 and len(pix) < 18000:
+            for x0, y0 in pix:
+                ml[x0, y0] = 0
+            removed_px += len(pix)
+print("streak removed px:", removed_px)
+
 # 内容 bbox 与中心距（安全区缩放依据）
 bbox = mask.getbbox()
 print("content bbox:", bbox)
