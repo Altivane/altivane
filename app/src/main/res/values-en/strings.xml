@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel">Workout Tracking</string>
+
+    <string name="nav_ride">Sport</string>
+    <string name="nav_mine">Me</string>
+
+    <string name="sport_ride">Ride</string>
+    <string name="sport_hike">Hike</string>
+
+    <string name="card_distance">Distance</string>
+    <string name="card_duration">Duration</string>
+    <string name="card_pace">Pace</string>
+    <string name="card_hr">Heart Rate</string>
+    <string name="card_cad">Cadence</string>
+    <string name="card_cals">Calories</string>
+    <string name="card_max_speed">Max Speed</string>
+    <string name="card_compass">Compass</string>
+    <string name="card_baro">Barometer</string>
+    <string name="card_altitude">Elevation</string>
+    <string name="card_track">Track</string>
+    <string name="card_profile">Elevation Chart</string>
+
+    <string name="fmt_card_tile">%s Card</string>
+    <string name="fmt_edit_cards">Edit Cards · %s</string>
+    <string name="fmt_sport_date">%1$s · %2$s</string>
+    <string name="fmt_km_banner">%s distance · km</string>
+    <string name="fmt_start">Start %s</string>
+    <string name="fmt_warmup">%s Warm-up</string>
+    <string name="fmt_coming">%s Starting Soon</string>
+
+    <string name="edit_cards_sub">Long-press to reorder · Tap + to add back</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_remove_card">Remove from Home</string>
+    <string name="btn_edit_cards">Edit Cards</string>
+    <string name="detail_title">Workout Details</string>
+    <string name="dlg_del_title">Delete this workout?</string>
+    <string name="dlg_del_text">Track, waypoints and stats will be deleted permanently</string>
+    <string name="warmup_tag">Warm-up</string>
+    <string name="cancel_hint">Tap anywhere to cancel</string>
+    <string name="wp_tag">Waypoint</string>
+
+    <string name="notif_rec_fmt">%s recording · Altivane</string>
+    <string name="notif_paused_fmt">%s paused · Altivane</string>
+
+    <string name="widget_speed">Speed</string>
+    <string name="widget_hr">Heart Rate</string>
+    <string name="widget_distance">Distance</string>
+    <string name="widget_cals">Calories</string>
+    <string name="widget_summary">Workout Summary</string>
+    <string name="widget_compass">Compass</string>
+    <string name="widget_track">Track</string>
+    <string name="widget_sos">SOS Torch</string>
+</resources>

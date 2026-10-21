@@ -85,6 +85,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.domain.AppLog
 import com.altivane.app.domain.CardType
@@ -217,18 +219,13 @@ fun chartFor(
         CardType.CAD -> (cadS.map { it.v.toDouble() }.takeIf { it.size >= 2 }
             ?: pts.map { it.cad.toDouble() }.filter { it >= 0 }.takeIf { it.size >= 2 })
             ?.let { CardChart(ChartKind.PACE_BARS, it) }
-        // 里程：小时柱（Apple 活动风格，24 桶全天栅格 + 峰值标注）
+        // 里程：百米云梯（累计里程刻度杠，v0.8.43 满高统一）
         CardType.DISTANCE -> pts.takeIf { it.size >= 2 }
-            ?.let {
-                CardChart(
-                    ChartKind.HOURLY_BARS, hourlyKmBuckets(it),
-                    nowHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-                )
-            }
-        // 时长：移动/停留时间带（按时间轴分桶，停留=空白缺口；速度阈值 1km/h）
+            ?.let { CardChart(ChartKind.LADDER, cumulativeKm(it)) }
+        // 时长：时间方块（实心=移动/空心=停留/半透明=进行中，v0.8.43 满高统一）
         CardType.DURATION -> pts.takeIf { it.size >= 2 }?.let { p ->
             CardChart(
-                ChartKind.MOVE_REST, p.map { it.speed * 3.6 },
+                ChartKind.TIME_BLOCKS, p.map { it.speed * 3.6 },
                 durationMs = (p.last().t - p.first().t).coerceAtLeast(0L),
                 timestamps = p.map { it.t }
             )
@@ -424,7 +421,7 @@ fun RideScreen(
                             CardType.TRACK -> TrackTile(viewPts, view.sport, base)
                             CardType.PROFILE -> ProfileTile(viewPts, base)
                             else -> StatCard(
-                                t.label, cardValue(t, view).first, cardValue(t, view).second, accentOf(t),
+                                stringResource(t.labelRes), cardValue(t, view).first, cardValue(t, view).second, accentOf(t),
                                 base, fill = true,
                                 chart = chartFor(
                                     t, viewPts, view.sport,
@@ -547,19 +544,19 @@ fun RideScreen(
         AlertDialog(
             onDismissRequest = { menuCard = null },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { menuCard = null }) { Text("取消") } },
-            title = { Text("${t.label} 卡片") },
+            dismissButton = { TextButton(onClick = { menuCard = null }) { Text(stringResource(R.string.btn_cancel)) } },
+            title = { Text(stringResource(R.string.fmt_card_tile, stringResource(t.labelRes))) },
             text = {
                 Column {
                     TextButton(onClick = {
                         order = order.filter { it != t }
                         saveCards(ctx, s.sport, order)
                         menuCard = null
-                    }) { Text("从首页移除", color = AvColors.pink) }
+                    }) { Text(stringResource(R.string.btn_remove_card), color = AvColors.pink) }
                     TextButton(onClick = {
                         menuCard = null
                         onEditCards()
-                    }) { Text("编辑卡片") }
+                    }) { Text(stringResource(R.string.btn_edit_cards)) }
                 }
             }
         )
@@ -682,7 +679,7 @@ private fun SportChipsRow(s: LiveState, onSelect: (SportType) -> Unit) {
                         Spacer(Modifier.width(6.dp))
                     }
                     Text(
-                        st.label,
+                        stringResource(st.labelRes),
                         style = MaterialTheme.typography.titleMedium,
                         color = if (sel) Color(0xFF0D1117) else accent
                     )
@@ -826,95 +823,20 @@ private fun CompassTile(heading: Float, modifier: Modifier = Modifier) {
 @Composable
 private fun TrackTile(pts: List<RidePoint>, sport: SportType, modifier: Modifier = Modifier) {
     val dark = isDark()
-    val dim = MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         modifier
             .glassCard(dark, AvColors.green)
             .padding(12.dp)
     ) {
-        CardTitleRow(CardType.TRACK.label, AvColors.green)
+        CardTitleRow(stringResource(CardType.TRACK.labelRes), AvColors.green)
         Spacer(Modifier.height(6.dp))
+        // v0.8.43 方案 B：彩虹足迹形状在上 + 海拔剪影在下 + 起蓝终红点（满高统一）
         Box(Modifier.fillMaxWidth().weight(1f)) {
-        Canvas(Modifier.fillMaxSize()) {
-            if (pts.size >= 2) {
-                val n = pts.size
-                // ① x 轴按累计里程等距（剖面图语义：横向 1px = 总里程/画布宽 米）
-                val cum = DoubleArray(n)
-                var totalD = 0.0
-                for (i in 1 until n) {
-                    totalD += RideStats.haversine(pts[i - 1].lat, pts[i - 1].lon, pts[i].lat, pts[i].lon)
-                    cum[i] = totalD
-                }
-                fun smooth(src: List<Double>): List<Double> = src.indices.map { i ->
-                    var s = 0.0; var c = 0
-                    for (j in maxOf(0, i - 2)..minOf(n - 1, i + 2)) { s += src[j]; c++ }
-                    s / c
-                }
-                val eles = smooth(pts.map { it.ele })
-                val spds = smooth(pts.map { it.speed * 3.6 })
-                val eLo = eles.min(); val eHi = eles.max()
-                val hasEle = eHi - eLo > 3.0
-                val sHi = (spds.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
-                val pad = 6.dp.toPx()
-                val h2 = size.height - pad * 2
-                // ② 海拔线真实比例：纵向像素/米 = 横向 ×3，钳制 8%~38% 卡高（与大图 drawRainbowTrack 同语义）
-                val mPerPx = if (totalD > 0.0) totalD / size.width else 1.0
-                val lift = if (hasEle)
-                    ((eHi - eLo) / mPerPx * 3.0).toFloat().coerceIn(h2 * 0.08f, h2 * 0.38f)
-                else 0f
-                val spdH = h2 - lift
-                fun xAt(i: Int): Float =
-                    if (totalD > 0.0) size.width * (cum[i] / totalD).toFloat()
-                    else size.width * i / (n - 1f)
-                fun yEle(i: Int): Float =
-                    (pad + h2) - ((eles[i] - eLo) / (eHi - eLo)).toFloat() * lift
-                fun ySpd(i: Int): Float = pad + (1f - (spds[i] / sHi).toFloat()) * spdH
-                // 中点贝塞尔平滑路径
-                fun curve(yAt: (Int) -> Float): Path = Path().apply {
-                    val p0 = Offset(xAt(0), yAt(0)); moveTo(p0.x, p0.y)
-                    for (i in 1 until n - 1) {
-                        val cur = Offset(xAt(i), yAt(i))
-                        val nxt = Offset(xAt(i + 1), yAt(i + 1))
-                        quadraticBezierTo(cur.x, cur.y, (cur.x + nxt.x) / 2f, (cur.y + nxt.y) / 2f)
-                    }
-                    lineTo(xAt(n - 1), yAt(n - 1))
-                }
-                // 速度曲线（虚线蓝）：独占海拔线上方区域，0..sHi 独立归一
-                drawPath(
-                    curve { i -> ySpd(i) },
-                    Color(0xFF5B9DFF),
-                    style = Stroke(
-                        1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 7f))
-                    )
-                )
-                // 海拔曲线（爬升橙红 / 下降电光青）：贴底山体轮廓，几米小坡不再撑满全卡
-                if (hasEle) {
-                    val line = curve { i -> yEle(i) }
-                    val fill = Path().apply {
-                        addPath(line)
-                        lineTo(xAt(n - 1), size.height)
-                        lineTo(xAt(0), size.height)
-                        close()
-                    }
-                    drawPath(fill, Color(0xFFFF8A3C).copy(alpha = 0.10f))
-                    for (i in 0 until n - 1) {
-                        val c = if (eles[i + 1] >= eles[i]) Color(0xFFFF8A3C) else Color(0xFF22D3EE)
-                        drawLine(
-                            c, Offset(xAt(i), yEle(i)), Offset(xAt(i + 1), yEle(i + 1)),
-                            strokeWidth = 2.2.dp.toPx(), cap = StrokeCap.Round
-                        )
-                    }
-                }
-            } else {
-                drawLine(
-                    dim.copy(alpha = 0.5f),
-                    Offset(size.width * 0.08f, size.height * 0.72f),
-                    Offset(size.width * 0.92f, size.height * 0.72f),
-                    strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round
-                )
-            }
-        }
+            TrackShape(
+                pts.map { listOf(it.lat, it.lon) },
+                pts.map { it.ele },
+                Modifier.fillMaxSize()
+            )
         }
     }
 }
@@ -928,7 +850,7 @@ private fun ProfileTile(pts: List<RidePoint>, modifier: Modifier = Modifier) {
             .glassCard(dark, AvColors.fuchsia)
             .padding(12.dp)
     ) {
-        CardTitleRow(CardType.PROFILE.label, AvColors.fuchsia)
+        CardTitleRow(stringResource(CardType.PROFILE.labelRes), AvColors.fuchsia)
         Spacer(Modifier.height(6.dp))
         ElevationSpark(
             pts.map { it.ele },
@@ -1108,7 +1030,7 @@ private fun MainStatCard(
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    view.sport.label,
+                    stringResource(view.sport.labelRes),
                     style = MaterialTheme.typography.titleMedium,
                     color = fg
                 )
@@ -1320,7 +1242,7 @@ private fun WarmupButton(sport: SportType, modifier: Modifier = Modifier) {
                 }
             }
             Text(
-                "热身",
+                stringResource(R.string.warmup_tag),
                 style = MaterialTheme.typography.labelSmall,
                 color = mono
             )
@@ -1331,10 +1253,10 @@ private fun WarmupButton(sport: SportType, modifier: Modifier = Modifier) {
         AlertDialog(
             onDismissRequest = { show = false },
             confirmButton = {
-                TextButton(onClick = { show = false }) { Text("开始 ${sport.label}") }
+                TextButton(onClick = { show = false }) { Text(stringResource(R.string.fmt_start, stringResource(sport.labelRes))) }
             },
             dismissButton = {},
-            title = { Text("${sport.label}热身清单") },
+            title = { Text(stringResource(R.string.fmt_warmup, stringResource(sport.labelRes))) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items.forEachIndexed { i, s ->
@@ -1391,13 +1313,13 @@ private fun CountdownOverlay(count: Int, sport: SportType, onCancel: () -> Unit)
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "${sport.label}即将开始",
+                stringResource(R.string.fmt_coming, stringResource(sport.labelRes)),
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.White.copy(alpha = 0.9f)
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "点击任意处取消",
+                stringResource(R.string.cancel_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.5f)
             )

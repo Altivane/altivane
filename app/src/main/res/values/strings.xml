@@ -2,4 +2,62 @@
 <resources>
     <string name="app_name">Altivane</string>
     <string name="notif_channel">运动记录</string>
+
+    <!-- 底部导航 -->
+    <string name="nav_ride">运动</string>
+    <string name="nav_mine">我的</string>
+
+    <!-- 运动类型 -->
+    <string name="sport_ride">骑行</string>
+    <string name="sport_hike">徒步</string>
+
+    <!-- 卡片标题 -->
+    <string name="card_distance">里程</string>
+    <string name="card_duration">时长</string>
+    <string name="card_pace">配速</string>
+    <string name="card_hr">心率</string>
+    <string name="card_cad">踏频</string>
+    <string name="card_cals">消耗</string>
+    <string name="card_max_speed">最高时速</string>
+    <string name="card_compass">指南针</string>
+    <string name="card_baro">气压</string>
+    <string name="card_altitude">高度</string>
+    <string name="card_track">轨迹</string>
+    <string name="card_profile">海拔图</string>
+
+    <!-- 格式串（多占位符必须位置化） -->
+    <string name="fmt_card_tile">%s 卡片</string>
+    <string name="fmt_edit_cards">编辑卡片 · %s</string>
+    <string name="fmt_sport_date">%1$s · %2$s</string>
+    <string name="fmt_km_banner">km · %s里程</string>
+    <string name="fmt_start">开始 %s</string>
+    <string name="fmt_warmup">%s热身清单</string>
+    <string name="fmt_coming">%s即将开始</string>
+
+    <!-- 通用文案 -->
+    <string name="edit_cards_sub">已添加长按拖动排序 · 未添加点 + 加回</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_remove_card">从首页移除</string>
+    <string name="btn_edit_cards">编辑卡片</string>
+    <string name="detail_title">运动详情</string>
+    <string name="dlg_del_title">删除这条运动记录？</string>
+    <string name="dlg_del_text">轨迹、打卡点与统计数据将一并删除，不可恢复</string>
+    <string name="warmup_tag">热身</string>
+    <string name="cancel_hint">点击任意处取消</string>
+    <string name="wp_tag">打卡</string>
+
+    <!-- 记录通知 -->
+    <string name="notif_rec_fmt">%s记录中 · Altivane</string>
+    <string name="notif_paused_fmt">%s已暂停 · Altivane</string>
+
+    <!-- 桌面小部件 -->
+    <string name="widget_speed">时速</string>
+    <string name="widget_hr">心率</string>
+    <string name="widget_distance">里程</string>
+    <string name="widget_cals">消耗</string>
+    <string name="widget_summary">运动概览</string>
+    <string name="widget_compass">指南针</string>
+    <string name="widget_track">轨迹</string>
+    <string name="widget_sos">SOS 手电筒</string>
 </resources>

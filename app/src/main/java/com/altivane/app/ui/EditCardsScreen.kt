@@ -51,6 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.domain.CardType
 
@@ -84,9 +86,9 @@ fun EditCardsScreen(app: RideApp, onBack: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onBackground)
             }
             Column {
-                Text("编辑卡片 · ${s.sport.label}", style = MaterialTheme.typography.headlineMedium,
+                Text(stringResource(R.string.fmt_edit_cards, stringResource(s.sport.labelRes)), style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
-                Text("已添加长按拖动排序 · 未添加点 + 加回",
+                Text(stringResource(R.string.edit_cards_sub),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -270,7 +272,7 @@ private fun DashboardCell(
                     .background(accent)
             )
             Text(
-                t.label,
+                stringResource(t.labelRes),
                 Modifier.padding(top = 6.dp),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

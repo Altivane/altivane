@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.sp
  * 卡片图表模型：每种卡片配专属图型（参考健康 App 视觉）。
  * HR_WAVE 心率波动线 / PACE_BARS 配速竖条（含踏频）/ AREA 平滑面积图 / ENERGY 强度分段条。
  */
-enum class ChartKind { AREA, HR_WAVE, PACE_BARS, ENERGY, SPEED_BARS, ELEV, CUMUL_RAINBOW, STEP_WARM, HOURLY_BARS, MOVE_REST }
+enum class ChartKind { AREA, HR_WAVE, PACE_BARS, ENERGY, SPEED_BARS, ELEV, CUMUL_RAINBOW, STEP_WARM, HOURLY_BARS, MOVE_REST, LADDER, TRACK_SHAPE, TIME_BLOCKS }
 
 data class CardChart(
     val kind: ChartKind,
@@ -51,12 +51,14 @@ data class CardChart(
     /** 竖条图绝对阈值（km/h）：≥gMax 紫、≥yMax 绿、否则黄；0 = 相对归一分档 */
     val yMax: Float = 0f,
     val gMax: Float = 0f,
-    /** MOVE_REST 专用：总时长 ms（停留标注换算分钟） */
+    /** MOVE_REST / TIME_BLOCKS 专用：总时长 ms（停留标注换算分钟） */
     val durationMs: Long = 0L,
-    /** MOVE_REST 专用：与 series 对齐的时间戳（ms），提供时按时间轴分桶（停留=空白缺口） */
+    /** MOVE_REST / TIME_BLOCKS 专用：与 series 对齐的时间戳（ms），提供时按时间轴分桶 */
     val timestamps: List<Long> = emptyList(),
     /** HOURLY_BARS 专用：当前小时（时间轴"现在"标签） */
-    val nowHour: Int = -1
+    val nowHour: Int = -1,
+    /** TRACK_SHAPE 专用：轨迹 [lat, lon] 对（series 复用为海拔序列） */
+    val latLon: List<List<Double>> = emptyList()
 )
 
 /** 三色强度分档：黄（慢）→ 绿（快）→ 紫（极限），阈值 60% / 85% */
@@ -778,5 +780,173 @@ fun CardChartView(
             chart.series, modifier, durationMs = chart.durationMs,
             timestamps = chart.timestamps, mini = mini
         )
+        ChartKind.LADDER -> LadderBars(chart.series, modifier, accent = AvColors.blue)
+        ChartKind.TRACK_SHAPE -> TrackShape(chart.latLon, chart.series, modifier)
+        ChartKind.TIME_BLOCKS -> TimeBlocks(
+            chart.series, modifier, timestamps = chart.timestamps, durationMs = chart.durationMs
+        )
+    }
+}
+
+/** 里程百米云梯（v0.8.43）：横杠自下而上为里程刻度，灰杠打底、蓝色完成部分，
+ *  级距自适应（0.05/0.1/0.2/0.5/1/2/5/10 km 保证 2~6 级），当前位置呼吸点 + 右缘小刻度。满高。 */
+@Composable
+fun LadderBars(series: List<Double>, modifier: Modifier = Modifier, accent: Color = AvColors.blue) {
+    val fg = MaterialTheme.colorScheme.onBackground
+    val dimC = MaterialTheme.colorScheme.onSurfaceVariant
+    Canvas(modifier) {
+        val total = series.lastOrNull() ?: return@Canvas
+        if (total <= 0.0) return@Canvas
+        val steps = listOf(0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0)
+        val step = steps.firstOrNull { total / it <= 5.5 } ?: 10.0
+        val levels = Math.ceil(total / step).toInt().coerceIn(1, 6)
+        val padR = 26.dp.toPx()
+        val rungW = size.width - padR
+        val gap = size.height / levels
+        val barH = (gap * 0.40f).coerceAtMost(9.dp.toPx())
+        val cr = CornerRadius(barH / 2f, barH / 2f)
+        val done = total / step
+        for (i in 0 until levels) {
+            val y = size.height - gap * (i + 0.5f)
+            drawRoundRect(fg.copy(alpha = 0.10f), Offset(0f, y - barH / 2f), Size(rungW, barH), cr)
+            val f = (done - i).coerceIn(0.0, 1.0)
+            if (f > 0f) {
+                val w = (rungW * f).toFloat().coerceAtLeast(barH)
+                drawRoundRect(
+                    if (f >= 1.0) accent else accent.copy(alpha = 0.72f),
+                    Offset(0f, y - barH / 2f), Size(w, barH), cr
+                )
+            }
+            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                color = android.graphics.Color.argb(
+                    (dimC.copy(alpha = 0.95f).alpha * 255).toInt(),
+                    (dimC.red * 255).toInt(), (dimC.green * 255).toInt(), (dimC.blue * 255).toInt()
+                )
+                textSize = 9.sp.toPx(); textAlign = android.graphics.Paint.Align.RIGHT
+            }
+            drawContext.canvas.nativeCanvas.drawText(
+                if (step >= 1.0) "%.0f".format(step * (i + 1)) else "%.1f".format(step * (i + 1)),
+                size.width, y + 3.5.dp.toPx(), p
+            )
+        }
+        val li = (done - 1).toInt().coerceIn(0, levels - 1)
+        val lf = (done - li).coerceIn(0.0, 1.0)
+        val yCur = size.height - gap * (li + 0.5f)
+        val xCur = (rungW * lf).toFloat()
+        drawCircle(accent.copy(alpha = 0.16f), barH * 1.2f, Offset(xCur, yCur))
+        drawCircle(Color.White, barH * 0.52f, Offset(xCur, yCur))
+        drawCircle(accent, barH * 0.38f, Offset(xCur, yCur))
+    }
+}
+
+/** 轨迹足迹卡（v0.8.43）：经纬度形状线（彩虹水平渐变、等比缩放居中）+ 起蓝终红点
+ *  + 下缘海拔面积剪影（浅绿）。满高。 */
+@Composable
+fun TrackShape(latLon: List<List<Double>>, eles: List<Double>, modifier: Modifier = Modifier) {
+    val startC = Color(0xFF378ADD); val endC = Color(0xFFE24B4A)
+    val fillC = AvColors.green.copy(alpha = 0.28f)
+    Canvas(modifier) {
+        if (latLon.size < 2) return@Canvas
+        val n = latLon.size
+        val stepI = if (n > 300) n / 300 + 1 else 1
+        val idx = (0 until n step stepI).toList() + listOf(n - 1)
+        val lats = latLon.map { it[0] }; val lons = latLon.map { it[1] }
+        val latMin = lats.min(); val latMax = lats.max()
+        val lonMin = lons.min(); val lonMax = lons.max()
+        val mLat = kotlin.math.cos(Math.toRadians((latMin + latMax) / 2)).coerceIn(0.3, 1.0)
+        val w1 = (((lonMax - lonMin) * mLat).takeIf { it > 1e-9 } ?: 1e-9).toFloat()
+        val h1 = ((latMax - latMin).takeIf { it > 1e-9 } ?: 1e-9).toFloat()
+        val shapeTop = 5.dp.toPx(); val shapeH = size.height * 0.60f
+        val scale = minOf((size.width * 0.86f) / w1, shapeH / h1)
+        val offX = (size.width - w1 * scale) / 2f
+        fun px(i: Int): Float = offX + ((lons[i] - lonMin) * mLat * scale).toFloat()
+        fun py(i: Int): Float = shapeTop + shapeH - ((lats[i] - latMin) * scale).toFloat()
+        val path = Path().apply {
+            moveTo(px(0), py(0))
+            idx.drop(1).forEach { lineTo(px(it), py(it)) }
+        }
+        drawPath(
+            path,
+            Brush.horizontalGradient(
+                listOf(Color(0xFF534AB7), Color(0xFF378ADD), Color(0xFF0F6E56), Color(0xFFBA7517))
+            ),
+            style = Stroke(4.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+        )
+        drawCircle(startC, 4.dp.toPx(), Offset(px(0), py(0)))
+        drawCircle(endC, 4.dp.toPx(), Offset(px(n - 1), py(n - 1)))
+        val hasEle = eles.size >= 2 && eles.any { it > 0.0 }
+        if (hasEle) {
+            val e = eles.filter { it > 0.0 }
+            val eMin = e.min(); val eMax = e.max()
+            if (eMax - eMin > 3.0) {
+                val base = size.height - 2.dp.toPx()
+                val area = size.height * 0.24f
+                val ep = Path().apply {
+                    moveTo(0f, base)
+                    idx.forEach { i ->
+                        if (eles[i] > 0.0) {
+                            val v = ((eles[i] - eMin) / (eMax - eMin)).coerceIn(0.0, 1.0)
+                            lineTo(size.width * i / (n - 1f), base - (v * area).toFloat())
+                        }
+                    }
+                    lineTo(size.width, base); close()
+                }
+                drawPath(ep, fillC)
+            }
+        }
+    }
+}
+
+/** 时长时间方块（v0.8.43）：格长自适应（5/10/15/20/30/60 分保证 ≤10 格），
+ *  实心=移动、空心=停留、最后格半透明=进行中，方格按宽高比排布。满高。 */
+@Composable
+fun TimeBlocks(
+    series: List<Double>,
+    modifier: Modifier = Modifier,
+    timestamps: List<Long> = emptyList(),
+    durationMs: Long = 0L,
+    moving: Color = AvColors.cyan
+) {
+    val fg = MaterialTheme.colorScheme.onBackground
+    Canvas(modifier) {
+        if (series.isEmpty()) return@Canvas
+        val hasT = timestamps.size == series.size && timestamps.size >= 2 && timestamps.last() > timestamps.first()
+        val spanMs = if (hasT) timestamps.last() - timestamps.first() else durationMs
+        if (spanMs <= 0) return@Canvas
+        val totalMin = spanMs / 60000.0
+        val cellOpts = listOf(5.0, 10.0, 15.0, 20.0, 30.0, 60.0)
+        val cellMin = cellOpts.firstOrNull { totalMin / it <= 10.0 } ?: 120.0
+        val cells = Math.ceil(totalMin / cellMin).toInt().coerceIn(1, 40)
+        val cols = Math.ceil(Math.sqrt(cells * size.width / size.height.coerceAtLeast(1f).toDouble()))
+            .toInt().coerceIn(1, cells)
+        val rows = Math.ceil(cells / cols.toDouble()).toInt()
+        val gap = 4.dp.toPx()
+        val cw = (size.width - gap * (cols - 1)) / cols
+        val chh = (size.height - gap * (rows - 1)) / rows
+        val cellMs = spanMs / cells.toDouble()
+        val cr = CornerRadius(cw * 0.24f, cw * 0.24f)
+        val t0 = if (hasT) timestamps.first() else 0L
+        for (i in 0 until cells) {
+            val r = i / cols; val c = i % cols
+            val x = c * (cw + gap); val y = r * (chh + gap)
+            var sum = 0.0; var cnt = 0
+            for (k in series.indices) {
+                val b = if (hasT) (((timestamps[k] - t0) / cellMs).toInt()).coerceIn(0, cells - 1)
+                        else (k * cells / series.size)
+                if (b == i) { sum += series[k]; cnt++ }
+            }
+            val isMoving = if (cnt > 0) sum / cnt >= 1.0 else false
+            val isLast = i == cells - 1
+            when {
+                isMoving -> drawRoundRect(
+                    if (isLast) moving.copy(alpha = 0.5f) else moving,
+                    Offset(x, y), Size(cw, chh), cr
+                )
+                else -> drawRoundRect(
+                    fg.copy(alpha = 0.10f), Offset(x, y), Size(cw, chh), cr,
+                    style = Stroke(1.1.dp.toPx())
+                )
+            }
+        }
     }
 }

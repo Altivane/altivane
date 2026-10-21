@@ -344,20 +344,23 @@ fun MapTrackView(
 
     // ---------- 数据绘制 ----------
     if (!follow) {
-        // 回放：全量重画 + fit（指纹不变跳过——宿主重组风暴不再反复失效轨迹源；拖动中暂停）
+        // 回放：全量重画 + fit（指纹不变跳过；拖动中暂停；静止 250ms 后才落地——
+        // 缩放手势刚结束就 setGeoJson 会与下一次单指滑动抢主线程 = 拖动卡顿）
         LaunchedEffect(styleReady, camMoving, pts, speeds, waypoints, plannedPath) {
             val st = style ?: return@LaunchedEffect
             if (!styleReady || camMoving) return@LaunchedEffect
+            delay(250)
             val sig = sigOf(pts, speeds, waypoints, plannedPath, presetMarkers)
             if (sig == lastSig) return@LaunchedEffect
             lastSig = sig
             applyTrackData(st, map, pts, speeds, maxSpeed, waypoints, plannedPath, presetMarkers, fit = true)
         }
     } else {
-        // 实时：全量刷新 + 相机跟随 + 蓝点（拖动中暂停，didChange 后补推）
+        // 实时：全量刷新 + 相机跟随 + 蓝点（拖动中暂停 + 静止 250ms 落地）
         LaunchedEffect(styleReady, camMoving, pts, speeds, waypoints) {
             val st = style ?: return@LaunchedEffect
             if (!styleReady || camMoving || pts.size < 2) return@LaunchedEffect
+            delay(250)
             val sig = sigOf(pts, speeds, waypoints, null, presetMarkers)
             if (sig == lastSig) return@LaunchedEffect
             lastSig = sig

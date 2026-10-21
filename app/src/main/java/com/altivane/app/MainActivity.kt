@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -445,8 +446,8 @@ fun GlassBottomBar(tab: Int, onSelect: (Int) -> Unit) {
             .height(56.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BottomItem("运动", Icons.Filled.PlayArrow, 0, tab, onSelect, Modifier.weight(1f), AvColors.cyan)
-        BottomItem("我的", Icons.Filled.Person, 1, tab, onSelect, Modifier.weight(1f), AvColors.green)
+        BottomItem(stringResource(R.string.nav_ride), Icons.Filled.PlayArrow, 0, tab, onSelect, Modifier.weight(1f), AvColors.cyan)
+        BottomItem(stringResource(R.string.nav_mine), Icons.Filled.Person, 1, tab, onSelect, Modifier.weight(1f), AvColors.green)
     }
 }
 

@@ -1,9 +1,11 @@
 package com.altivane.app.domain
 
-/** 运动类型 */
-enum class SportType(val label: String) {
-    HIKE("徒步"),
-    RIDE("骑行")
+import com.altivane.app.R
+
+/** 运动类型（labelRes 五语：中/英/俄/法/西） */
+enum class SportType(val labelRes: Int) {
+    HIKE(R.string.sport_hike),
+    RIDE(R.string.sport_ride)
 }
 
 /** 打卡点：手动打卡 M / 每1km自动 K / 每100m爬升自动 C */
@@ -17,20 +19,20 @@ data class Waypoint(
     val photo: String? = null
 )
 
-/** 可排序卡片 */
-enum class CardType(val label: String) {
-    DISTANCE("里程"),
-    DURATION("时长"),
-    PACE("配速"),
-    HR("心率"),
-    CAD("踏频"),
-    CALS("消耗"),
-    MAX_SPEED("最高时速"),
-    COMPASS("指南针"),
-    BARO("气压"),
-    ALTITUDE("高度"),
-    TRACK("轨迹"),
-    PROFILE("海拔图")
+/** 可排序卡片（labelRes 五语） */
+enum class CardType(val labelRes: Int) {
+    DISTANCE(R.string.card_distance),
+    DURATION(R.string.card_duration),
+    PACE(R.string.card_pace),
+    HR(R.string.card_hr),
+    CAD(R.string.card_cad),
+    CALS(R.string.card_cals),
+    MAX_SPEED(R.string.card_max_speed),
+    COMPASS(R.string.card_compass),
+    BARO(R.string.card_baro),
+    ALTITUDE(R.string.card_altitude),
+    TRACK(R.string.card_track),
+    PROFILE(R.string.card_profile)
 }
 
 /** 单例实时状态（服务写，UI 读） */

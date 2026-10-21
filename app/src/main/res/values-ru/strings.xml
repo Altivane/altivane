@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel">Запись тренировок</string>
+
+    <string name="nav_ride">Спорт</string>
+    <string name="nav_mine">Профиль</string>
+
+    <string name="sport_ride">Велосипед</string>
+    <string name="sport_hike">Поход</string>
+
+    <string name="card_distance">Дистанция</string>
+    <string name="card_duration">Время</string>
+    <string name="card_pace">Темп</string>
+    <string name="card_hr">Пульс</string>
+    <string name="card_cad">Каденс</string>
+    <string name="card_cals">Ккал</string>
+    <string name="card_max_speed">Макс. скорость</string>
+    <string name="card_compass">Компас</string>
+    <string name="card_baro">Давление</string>
+    <string name="card_altitude">Высота</string>
+    <string name="card_track">Трек</string>
+    <string name="card_profile">Профиль высоты</string>
+
+    <string name="fmt_card_tile">Карточка: %s</string>
+    <string name="fmt_edit_cards">Карточки · %s</string>
+    <string name="fmt_sport_date">%1$s · %2$s</string>
+    <string name="fmt_km_banner">км · дистанция %s</string>
+    <string name="fmt_start">Старт %s</string>
+    <string name="fmt_warmup">Разминка: %s</string>
+    <string name="fmt_coming">%s скоро начнётся</string>
+
+    <string name="edit_cards_sub">Долгое нажатие — сортировка · «+» — вернуть</string>
+    <string name="btn_cancel">Отмена</string>
+    <string name="btn_delete">Удалить</string>
+    <string name="btn_remove_card">Убрать с главной</string>
+    <string name="btn_edit_cards">Настроить карточки</string>
+    <string name="detail_title">Детали тренировки</string>
+    <string name="dlg_del_title">Удалить эту тренировку?</string>
+    <string name="dlg_del_text">Трек, отметки и статистика будут удалены безвозвратно</string>
+    <string name="warmup_tag">Разминка</string>
+    <string name="cancel_hint">Нажмите в любом месте для отмены</string>
+    <string name="wp_tag">Отметка</string>
+
+    <string name="notif_rec_fmt">%s — запись · Altivane</string>
+    <string name="notif_paused_fmt">%s — пауза · Altivane</string>
+
+    <string name="widget_speed">Скорость</string>
+    <string name="widget_hr">Пульс</string>
+    <string name="widget_distance">Дистанция</string>
+    <string name="widget_cals">Ккал</string>
+    <string name="widget_summary">Сводка</string>
+    <string name="widget_compass">Компас</string>
+    <string name="widget_track">Трек</string>
+    <string name="widget_sos">SOS фонарь</string>
+</resources>

@@ -52,6 +52,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.RideEntity
 import com.altivane.app.domain.RoutesData
@@ -89,7 +91,7 @@ fun MineScreen(
     ) {
         Spacer(Modifier.height(4.dp))
         Text(
-            "我的",
+            stringResource(R.string.nav_mine),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )

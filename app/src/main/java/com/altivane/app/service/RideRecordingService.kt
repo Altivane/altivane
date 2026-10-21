@@ -324,8 +324,8 @@ class RideRecordingService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val title = when (s.phase) {
-            Phase.RECORDING -> "${s.sport.label}记录中 · Altivane"
-            Phase.PAUSED -> "${s.sport.label}已暂停 · Altivane"
+            Phase.RECORDING -> getString(R.string.notif_rec_fmt, getString(s.sport.labelRes))
+            Phase.PAUSED -> getString(R.string.notif_paused_fmt, getString(s.sport.labelRes))
             Phase.IDLE -> "Altivane"
         }
         val text = "%.2f km · %.1f km/h".format(s.distanceM / 1000.0, s.speedKmh)

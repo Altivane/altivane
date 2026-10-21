@@ -68,20 +68,27 @@ object Coach {
         }
     }
 
+    // TODO(i18n): TTS 播报文案暂为中文，多语言播报待后续
     fun startMsg(sport: SportType): String = when (sport) {
-        SportType.RIDE -> "${sport.label}开始，注意安全，先热身再发力"
-        SportType.HIKE -> "${sport.label}开始，保持节奏，前两公里慢走热身"
+        SportType.RIDE -> "骑行开始，注意安全，先热身再发力"
+        SportType.HIKE -> "徒步开始，保持节奏，前两公里慢走热身"
     }
 
     fun kmMessage(idx: Int, splitMs: Long, sport: SportType, kcal: Double): String =
         "第 $idx 公里，用时 ${fmtDur(splitMs)}，累计消耗 ${kcal.toInt()} 千卡" +
                 if (sport == SportType.HIKE) "，注意补充水分" else ""
 
+    /** TODO(i18n): 拼接句中的运动名暂为中文 */
+    private fun zhName(sport: SportType): String = when (sport) {
+        SportType.RIDE -> "骑行"
+        SportType.HIKE -> "徒步"
+    }
+
     fun finishSummary(
         sport: SportType, distanceM: Double, movingMs: Long,
         elevGainM: Double, kcal: Double
     ): String =
-        "${sport.label}结束，全程 ${"%.2f".format(distanceM / 1000.0)} 公里，" +
+        "${zhName(sport)}结束，全程 ${"%.2f".format(distanceM / 1000.0)} 公里，" +
                 "用时 ${fmtDur(movingMs)}，" +
                 "消耗 ${kcal.toInt()} 千卡。辛苦了，记得拉伸放松"
 

@@ -58,6 +58,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.PointEntity
 import com.altivane.app.data.RideEntity
@@ -183,7 +185,7 @@ fun CardDetailScreen(
                 )
             }
             Column {
-                Text(type.label, style = MaterialTheme.typography.headlineMedium,
+                Text(stringResource(type.labelRes), style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
             }
             // 轨迹详情：右上角标注运动类型 + 时间（按设计稿）
@@ -191,10 +193,10 @@ fun CardDetailScreen(
                 Spacer(Modifier.weight(1f))
                 lastRide?.let { r ->
                     val sportName = try {
-                        SportType.valueOf(r.sportType).label
-                    } catch (_: Exception) { "徒步" }
+                        SportType.valueOf(r.sportType)
+                    } catch (_: Exception) { SportType.HIKE }
                     Text(
-                        "$sportName · " + java.text.SimpleDateFormat(
+                        stringResource(sportName.labelRes) + " · " + java.text.SimpleDateFormat(
                             "MM-dd HH:mm", java.util.Locale.CHINA
                         ).format(java.util.Date(r.startTime)),
                         style = MaterialTheme.typography.labelMedium,

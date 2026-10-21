@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.RideEntity
 import com.altivane.app.domain.Coach
@@ -102,7 +104,7 @@ private fun RideCard(r: RideEntity, onClick: () -> Unit) {
                         .background(accent)
                 )
                 Text(
-                    "  ${st.label} · ${fmtDate(r.startTime)}",
+                    "  " + stringResource(R.string.fmt_sport_date, stringResource(st.labelRes), fmtDate(r.startTime)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

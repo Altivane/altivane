@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.GpxExporter
 import com.altivane.app.data.PointEntity
@@ -117,13 +119,13 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
             }
             Column {
                 Text(
-                    "运动详情",
+                    stringResource(R.string.detail_title),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 ride?.let { r ->
                     Text(
-                        "${sportOf(r).label} · ${fmtDate(r.startTime)}",
+                        stringResource(R.string.fmt_sport_date, stringResource(sportOf(r).labelRes), fmtDate(r.startTime)),
                         style = MaterialTheme.typography.labelMedium,
                         color = AvColors.onColor(AvColors.cyan)
                     )
@@ -165,7 +167,7 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                "km · ${sport.label}里程",
+                                stringResource(R.string.fmt_km_banner, stringResource(sport.labelRes)),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = AvColors.onColor(AvColors.cyan),
                                 modifier = Modifier.padding(bottom = 10.dp)
@@ -324,7 +326,7 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                     Column {
                         CardTitleRow("运动解读", AvColors.cyan)
                         Spacer(Modifier.height(8.dp))
-                        reportLines(r, prev, km, hrList).forEach { line ->
+                        reportLines(r, prev, km, hrList, stringResource(sportOf(r).labelRes)).forEach { line ->
                             Row(Modifier.padding(vertical = 3.dp)) {
                                 Box(
                                     Modifier
@@ -474,18 +476,18 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         app.db.dao().deleteRide(id)
                         withContext(Dispatchers.Main) { onBack() }
                     }
-                }) { Text("删除") }
+                }) { Text(stringResource(R.string.btn_delete)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("取消") } },
-            title = { Text("删除这条运动记录？") },
-            text = { Text("轨迹、打卡点与统计数据将一并删除，不可恢复") }
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.btn_cancel)) } },
+            title = { Text(stringResource(R.string.dlg_del_title)) },
+            text = { Text(stringResource(R.string.dlg_del_text)) }
         )
     }
 }
 
 /** 运动解读文案：对比上次 / 速度配速 / 爬升海拔 / 心率强度判读 */
 private fun reportLines(
-    r: RideEntity, prev: RideEntity?, km: Double, hrList: List<Double>
+    r: RideEntity, prev: RideEntity?, km: Double, hrList: List<Double>, sportName: String
 ): List<String> {
     val sport = sportOf(r)
     val lines = mutableListOf<String>()
@@ -493,14 +495,15 @@ private fun reportLines(
     if (prev != null) {
         val prevKm = prev.distanceM / 1000.0
         val d = km - prevKm
-        lines += "本次${sport.label} %.2f km，较上次%s%.2f km（上次 %.2f km）".format(
+        // TODO(i18n): 运动报告长尾文案五语化（含数字格式占位）
+        lines += "本次$sportName %.2f km，较上次%s%.2f km（上次 %.2f km）".format(
             km, if (d >= 0) "+" else "", abs(d), prevKm
         )
         lines += "移动用时 %s，上次 %s".format(
             fmtCardDur(r.movingS * 1000L), fmtCardDur(prev.movingS * 1000L)
         )
     } else {
-        lines += "本次${sport.label} %.2f km，移动用时 %s".format(km, fmtCardDur(r.movingS * 1000L))
+        lines += "本次$sportName %.2f km，移动用时 %s".format(km, fmtCardDur(r.movingS * 1000L))
     }
     // ② 速度 / 配速
     if (sport == SportType.RIDE) {

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel">Registro de actividad</string>
+
+    <string name="nav_ride">Deporte</string>
+    <string name="nav_mine">Perfil</string>
+
+    <string name="sport_ride">Ciclismo</string>
+    <string name="sport_hike">Senderismo</string>
+
+    <string name="card_distance">Distancia</string>
+    <string name="card_duration">Duración</string>
+    <string name="card_pace">Ritmo</string>
+    <string name="card_hr">Pulsaciones</string>
+    <string name="card_cad">Cadencia</string>
+    <string name="card_cals">Calorías</string>
+    <string name="card_max_speed">Vel. máx.</string>
+    <string name="card_compass">Brújula</string>
+    <string name="card_baro">Presión</string>
+    <string name="card_altitude">Altitud</string>
+    <string name="card_track">Ruta</string>
+    <string name="card_profile">Perfil alt.</string>
+
+    <string name="fmt_card_tile">Tarjeta %s</string>
+    <string name="fmt_edit_cards">Tarjetas · %s</string>
+    <string name="fmt_sport_date">%1$s · %2$s</string>
+    <string name="fmt_km_banner">km · distancia %s</string>
+    <string name="fmt_start">Iniciar %s</string>
+    <string name="fmt_warmup">Calentamiento %s</string>
+    <string name="fmt_coming">%s va a empezar</string>
+
+    <string name="edit_cards_sub">Mantén pulsado para ordenar · + para añadir</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_delete">Eliminar</string>
+    <string name="btn_remove_card">Quitar del inicio</string>
+    <string name="btn_edit_cards">Editar tarjetas</string>
+    <string name="detail_title">Detalles de la actividad</string>
+    <string name="dlg_del_title">¿Eliminar esta actividad?</string>
+    <string name="dlg_del_text">La ruta, los puntos y las estadísticas se eliminarán definitivamente</string>
+    <string name="warmup_tag">Calent.</string>
+    <string name="cancel_hint">Toca en cualquier lugar para cancelar</string>
+    <string name="wp_tag">Punto</string>
+
+    <string name="notif_rec_fmt">%s en curso · Altivane</string>
+    <string name="notif_paused_fmt">%s en pausa · Altivane</string>
+
+    <string name="widget_speed">Velocidad</string>
+    <string name="widget_hr">Pulsaciones</string>
+    <string name="widget_distance">Distancia</string>
+    <string name="widget_cals">Calorías</string>
+    <string name="widget_summary">Resumen</string>
+    <string name="widget_compass">Brújula</string>
+    <string name="widget_track">Ruta</string>
+    <string name="widget_sos">Linterna SOS</string>
+</resources>

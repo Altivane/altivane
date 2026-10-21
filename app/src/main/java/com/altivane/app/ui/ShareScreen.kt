@@ -43,10 +43,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.PointEntity
 import com.altivane.app.data.RideEntity
 import com.altivane.app.data.WaypointEntity
+import com.altivane.app.domain.SportType
 import com.altivane.app.share.ShareImageRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,11 +119,17 @@ fun ShareScreen(app: RideApp, id: Long, onBack: () -> Unit) {
         onDispose { try { sn?.cancel() } catch (_: Exception) {} }
     }
 
+    val sportName = stringResource(
+        try {
+            SportType.valueOf(ride?.sportType ?: "RIDE").labelRes
+        } catch (_: Exception) { R.string.sport_ride }
+    )
+
     LaunchedEffect(ride, pts, wps, mapBmp, projPts, projWps) {
         val r = ride
         if (r != null) {
             bmp = withContext(Dispatchers.Default) {
-                ShareImageRenderer.render(pts, wps, r, mapBmp, projPts, projWps, dark)
+                ShareImageRenderer.render(pts, wps, r, mapBmp, projPts, projWps, dark, sportName)
             }
         }
     }

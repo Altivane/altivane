@@ -73,7 +73,8 @@ object ShareImageRenderer {
         mapBmp: Bitmap? = null,
         projPts: List<FloatArray>? = null,
         projWps: List<FloatArray>? = null,
-        dark: Boolean = true
+        dark: Boolean = true,
+        sportName: String = ""
     ): Bitmap {
         val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
@@ -93,7 +94,7 @@ object ShareImageRenderer {
             drawTrack(c, pts, wps, sport, th)
         }
         drawRainbowBar(c, th)
-        drawPanel(c, pts, wps, ride, sport, th)
+        drawPanel(c, pts, wps, ride, sport, th, sportName)
         return bmp
     }
 
@@ -262,7 +263,7 @@ object ShareImageRenderer {
 
     private fun drawPanel(
         c: Canvas, pts: List<PointEntity>, wps: List<WaypointEntity>,
-        ride: RideEntity?, sport: SportType, th: Theme
+        ride: RideEntity?, sport: SportType, th: Theme, sportName: String
     ) {
         val dist = ride?.distanceM ?: 0.0
         val avg = ride?.avgKmh ?: 0.0
@@ -275,7 +276,8 @@ object ShareImageRenderer {
             java.text.SimpleDateFormat("yyyy.MM.dd HH:mm", java.util.Locale.CHINA)
                 .format(java.util.Date(it.startTime))
         } ?: ""
-        c.drawText("${sport.label.uppercase()} · $date", PAD, 120f, textPaint(34f, th.dim))
+        val sportTag = if (sportName.isEmpty()) sport.name else sportName
+        c.drawText("${sportTag.uppercase()} · $date", PAD, 120f, textPaint(34f, th.dim))
         c.drawText("ALTIVANE", W - PAD - 200f, 120f, textPaint(34f, th.dim, medium = true, spacing = 0.18f))
 
         // 指北针装饰
