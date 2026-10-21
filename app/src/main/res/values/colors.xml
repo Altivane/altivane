@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 图标底色 = 用户原图背景色（art/appicon.png 取角） -->
+    <color name="ic_bg">#353A40</color>
+</resources>
