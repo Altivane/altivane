@@ -46,6 +46,22 @@ data class WaypointEntity(
     val photo: String? = null
 )
 
+/** 本地保存的运动路线（v0.8.46「存为我的路线」）：轨迹降采样 JSON [[lat,lon,ele],...] */
+@Entity(
+    tableName = "local_routes",
+    indices = [Index(value = ["dateMs"], unique = true)]
+)
+data class LocalRouteEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val dateMs: Long,
+    val sport: String,
+    val distKm: Double,
+    val gainM: Double,
+    val durS: Int,
+    val ptsJson: String
+)
+
 @Dao
 interface RideDao {
     @Insert
@@ -91,6 +107,20 @@ interface RideDao {
 
     @Query("DELETE FROM rides WHERE id = :rideId")
     suspend fun deleteRide(rideId: Long)
+
+    // ---- 本地路线（存为我的路线）----
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLocalRoute(r: LocalRouteEntity): Long
+
+    @Query("SELECT * FROM local_routes ORDER BY dateMs DESC")
+    fun localRoutes(): Flow<List<LocalRouteEntity>>
+
+    @Query("SELECT * FROM local_routes WHERE id = :id")
+    suspend fun localRoute(id: Long): LocalRouteEntity?
+
+    @Query("DELETE FROM local_routes WHERE id = :id")
+    suspend fun deleteLocalRoute(id: Long)
 }
 
 /** 轨迹经纬度包围盒（成就徽章判定用） */
@@ -102,7 +132,11 @@ data class RideBound(
     val maxLon: Double
 )
 
-@Database(entities = [RideEntity::class, PointEntity::class, WaypointEntity::class], version = 3, exportSchema = false)
+@Database(
+    entities = [RideEntity::class, PointEntity::class, WaypointEntity::class, LocalRouteEntity::class],
+    version = 4,
+    exportSchema = false
+)
 abstract class RideDb : RoomDatabase() {
     abstract fun dao(): RideDao
 
@@ -124,6 +158,18 @@ abstract class RideDb : RoomDatabase() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE waypoints ADD COLUMN photo TEXT")
+            }
+        }
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS local_routes (" +
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "name TEXT NOT NULL, dateMs INTEGER NOT NULL, sport TEXT NOT NULL, " +
+                            "distKm REAL NOT NULL, gainM REAL NOT NULL, durS INTEGER NOT NULL, " +
+                            "ptsJson TEXT NOT NULL)"
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_local_routes_dateMs ON local_routes (dateMs)")
             }
         }
     }

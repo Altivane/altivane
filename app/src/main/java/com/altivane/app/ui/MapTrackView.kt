@@ -714,9 +714,18 @@ private fun photoMarkerBitmap(path: String): Bitmap? = try {
         val src = android.graphics.BitmapFactory.decodeFile(
             path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
         ) ?: return null
-        val w = src.width; val h = src.height
+        val rot = exifRotation(path)
+        val oriented = if (rot != 0f) {
+            val o = Bitmap.createBitmap(
+                src, 0, 0, src.width, src.height,
+                android.graphics.Matrix().apply { postRotate(rot) }, true
+            )
+            if (o != src) src.recycle()
+            o
+        } else src
+        val w = oriented.width; val h = oriented.height
         val side = minOf(w, h)
-        val square = Bitmap.createBitmap(src, (w - side) / 2, (h - side) / 2, side, side)
+        val square = Bitmap.createBitmap(oriented, (w - side) / 2, (h - side) / 2, side, side)
         val size = 96
         val scaled = Bitmap.createScaledBitmap(square, size, size, true)
         val out = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)

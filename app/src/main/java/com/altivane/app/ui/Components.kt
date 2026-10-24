@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -643,7 +644,22 @@ fun androidx.compose.ui.graphics.drawscope.DrawScope.drawRainbowTrack(
     drawCircle(Color(0xFFFF6B81), radius = trackW * 1.4f, center = sN, style = Stroke(trackW * 0.7f))
 }
 
-/** 打卡照片解码（IO 线程降采样，防 OOM） */
+/** EXIF 方向角（度）：0/90/180/270，读不到返回 0 */
+fun exifRotation(path: String): Float = try {
+    when (
+        android.media.ExifInterface(path)
+            .getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, 1)
+    ) {
+        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+        else -> 0f
+    }
+} catch (_: Exception) {
+    0f
+}
+
+/** 打卡照片解码（IO 线程降采样 + EXIF 方向转正，防 OOM / 防横躺） */
 @Composable
 fun rememberPhotoBitmap(path: String?, targetPx: Int = 240): ImageBitmap? {
     var bmp by remember(path) { mutableStateOf<ImageBitmap?>(null) }
@@ -654,15 +670,112 @@ fun rememberPhotoBitmap(path: String?, targetPx: Int = 240): ImageBitmap? {
                 val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 android.graphics.BitmapFactory.decodeFile(path, bounds)
                 val sample = maxOf(1, maxOf(bounds.outWidth, bounds.outHeight) / targetPx)
-                android.graphics.BitmapFactory.decodeFile(
+                val src = android.graphics.BitmapFactory.decodeFile(
                     path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
-                )?.asImageBitmap()
+                ) ?: return@withContext null
+                val rot = exifRotation(path)
+                if (rot == 0f) src.asImageBitmap()
+                else android.graphics.Bitmap.createBitmap(
+                    src, 0, 0, src.width, src.height,
+                    android.graphics.Matrix().apply { postRotate(rot) }, true
+                ).also { if (it != src) src.recycle() }.asImageBitmap()
             } catch (_: Exception) {
                 null
             }
         }
     }
     return bmp
+}
+
+// 手动旋转记录（查看器旋转按钮，会话内记住：老照片方向标签已丢失只能手动转正）
+private val manualPhotoRot = mutableMapOf<String, Int>()
+
+private fun openExternalViewer(ctx: android.content.Context, path: String, mime: String) {
+    try {
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            ctx, ctx.packageName + ".fileprovider", java.io.File(path)
+        )
+        ctx.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW)
+                .setDataAndType(uri, mime)
+                .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        )
+    } catch (_: Exception) {
+    }
+}
+
+/**
+ * 打卡照片全屏查看（v0.8.46）：EXIF 转正解码、按比例占满屏宽（不再整屏黑边）、
+ * 底部操作条——动态播放（同目录同名 .mp4，动态照片提取）/ 手动旋转 / 系统相册查看。
+ */
+@Composable
+fun PhotoZoomDialog(path: String, onDismiss: () -> Unit) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        val bmp = rememberPhotoBitmap(path, 2048)
+        val video = remember(path) {
+            java.io.File(path.removeSuffix(".jpg") + ".mp4").takeIf { it.exists() }
+        }
+        var rot by remember(path) { mutableStateOf(manualPhotoRot[path] ?: 0) }
+        BoxWithConstraints(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.94f))
+                .clickable { onDismiss() },
+            contentAlignment = Alignment.Center
+        ) {
+            if (bmp != null) {
+                val ratio = bmp.width.toFloat() / bmp.height
+                // 图高（按满宽算）超出屏高 → 改满高约束，两种都无黑边
+                val tooTall = maxWidth / ratio > maxHeight
+                Image(
+                    bmp, null,
+                    Modifier
+                        .then(if (tooTall) Modifier.fillMaxSize() else Modifier.fillMaxWidth().aspectRatio(ratio))
+                        .graphicsLayer { rotationZ = rot.toFloat() },
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                Text(
+                    androidx.compose.ui.res.stringResource(com.altivane.app.R.string.loading),
+                    color = Color.White
+                )
+            }
+            Row(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 44.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (video != null) {
+                    ZoomChip("▶ " + androidx.compose.ui.res.stringResource(com.altivane.app.R.string.photo_live)) {
+                        openExternalViewer(ctx, video.absolutePath, "video/mp4")
+                    }
+                }
+                ZoomChip("⟳") {
+                    rot = (rot + 90) % 360
+                    manualPhotoRot[path] = rot
+                }
+                ZoomChip(androidx.compose.ui.res.stringResource(com.altivane.app.R.string.photo_open_gallery)) {
+                    openExternalViewer(ctx, path, "image/jpeg")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ZoomChip(text: String, onClick: () -> Unit) {
+    Text(
+        text,
+        Modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White.copy(alpha = 0.16f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        color = Color.White,
+        style = MaterialTheme.typography.labelMedium
+    )
 }
 
 /**

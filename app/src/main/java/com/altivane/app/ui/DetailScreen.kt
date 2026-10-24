@@ -437,31 +437,62 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         }
                     }
                 }
+
+                // ⑨ 存为我的路线（v0.8.46）：轨迹降采样存入 local_routes，在 我的·路线 页查看
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .glassCard(dark, AvColors.green)
+                        .clickable {
+                            scope.launch(Dispatchers.IO) {
+                                try {
+                                    val step = maxOf(1, pts.size / 300)
+                                    val arr = org.json.JSONArray()
+                                    for (i in pts.indices step step) {
+                                        arr.put(
+                                            org.json.JSONArray()
+                                                .put(pts[i].lat).put(pts[i].lon).put(pts[i].ele)
+                                        )
+                                    }
+                                    app.db.dao().insertLocalRoute(
+                                        com.altivane.app.data.LocalRouteEntity(
+                                            name = SimpleDateFormat("MM.dd HH:mm", Locale.CHINA)
+                                                .format(Date(r.startTime)),
+                                            dateMs = r.startTime,
+                                            sport = r.sportType,
+                                            distKm = r.distanceM / 1000.0,
+                                            gainM = r.elevGainM,
+                                            durS = r.movingS,
+                                            ptsJson = arr.toString()
+                                        )
+                                    )
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            ctx, ctx.getString(R.string.lr_saved), Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                } catch (e: Exception) {
+                                    com.altivane.app.domain.AppLog.e("Route", "save local route", e)
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.lr_save),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
                 Spacer(Modifier.height(6.dp))
             }
         }
     }
 
-    // 打卡照片全屏查看（点击放大）
+    // 打卡照片全屏查看（EXIF 转正 / 按比例占满 / 动态播放 / 相册查看）
     zoomPath?.let { p ->
-        val big = rememberPhotoBitmap(p, 2048)
-        androidx.compose.ui.window.Dialog(onDismissRequest = { zoomPath = null }) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .clickable { zoomPath = null },
-                contentAlignment = Alignment.Center
-            ) {
-                big?.let {
-                    androidx.compose.foundation.Image(
-                        it, null,
-                        Modifier.fillMaxSize(),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                    )
-                } ?: Text(stringResource(R.string.loading), color = Color.White)
-            }
-        }
+        PhotoZoomDialog(p) { zoomPath = null }
     }
 
     if (confirmDelete) {

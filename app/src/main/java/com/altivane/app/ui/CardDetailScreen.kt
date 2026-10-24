@@ -531,24 +531,9 @@ fun CardDetailScreen(
         }
     }
 
-    // 打卡照片全屏放大
+    // 打卡照片全屏放大（EXIF 转正 / 按比例占满 / 动态播放 / 相册查看）
     zoomPhoto?.let { p ->
-        Dialog(onDismissRequest = { zoomPhoto = null }) {
-            val bmp = rememberPhotoBitmap(p, 2048)
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.92f))
-                    .clickable { zoomPhoto = null },
-                contentAlignment = Alignment.Center
-            ) {
-                if (bmp != null) {
-                    Image(bmp, null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                } else {
-                    Text(stringResource(R.string.loading), color = Color.White)
-                }
-            }
-        }
+        PhotoZoomDialog(p) { zoomPhoto = null }
     }
 }
 

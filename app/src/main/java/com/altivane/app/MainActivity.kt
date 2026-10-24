@@ -67,31 +67,45 @@ class MainActivity : ComponentActivity() {
     }
 
     private lateinit var permLauncher: ActivityResultLauncher<Array<String>>
-    private var pendingPhoto: File? = null
+    private var pendingMediaUri: android.net.Uri? = null
+    private var pendingMediaLoc: Pair<Double, Double>? = null
     private var pendingAvatar: File? = null
     private var configReceiver: android.content.BroadcastReceiver? = null
 
     private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         if (ok) {
-            val f = pendingPhoto ?: return@registerForActivityResult
+            val uri = pendingMediaUri ?: return@registerForActivityResult
             val app = application as RideApp
+            val latLon = pendingMediaLoc
+            // 释放 IS_PENDING：原片（含 EXIF 方向/GPS/动态视频数据）立即在系统相册可见
+            try {
+                contentResolver.update(
+                    uri,
+                    android.content.ContentValues().apply {
+                        put(android.provider.MediaStore.Images.Media.IS_PENDING, 0)
+                    },
+                    null, null
+                )
+            } catch (_: Exception) {
+            }
+            var done = false
+            fun finish(place: String) {
+                if (done) return
+                done = true
+                val path = processWaypointPhoto(uri, place, latLon)
+                if (path != null) {
+                    val hhmm = java.text.SimpleDateFormat("HH:mm", java.util.Locale.CHINA)
+                        .format(java.util.Date(System.currentTimeMillis()))
+                    app.session.addWaypoint("M", place.ifBlank { getString(R.string.wp_tag) + " $hhmm" }, path)
+                }
+            }
             val last = app.session.points.value.lastOrNull()
             if (last != null) {
                 // 逆地理查位置名（POI 优先，如「黄山迎客松」），4s 超时兜底用时间
-                var done = false
-                fun finish(place: String) {
-                    if (done) return
-                    done = true
-                    stampPhoto(f, place)
-                    val hhmm = java.text.SimpleDateFormat("HH:mm", java.util.Locale.CHINA)
-                        .format(java.util.Date(System.currentTimeMillis()))
-                    app.session.addWaypoint("M", place.ifBlank { getString(R.string.wp_tag) + " $hhmm" }, f.absolutePath)
-                }
                 reverseGeo(last.lat, last.lon) { finish(it) }
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ finish("") }, 4000)
             } else {
-                stampPhoto(f, "")
-                app.session.addWaypoint("M", getString(R.string.wp_tag), f.absolutePath)
+                finish("")
             }
         }
     }
@@ -133,35 +147,120 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** 照片烙印：底部半透明条 + 位置名 + 时间（分享/详情共用同一张图） */
-    private fun stampPhoto(f: File, place: String) {
+    /**
+     * 打卡照片处理（v0.8.46 重写）：
+     * ① 读 MediaStore 原片字节 → ② 提取动态照片内嵌视频（GCamera/Huawei XMP MicroVideo，存同名 .mp4）
+     * ③ EXIF 方向转正解码（旧流程 BitmapFactory 无视方向 = 照片横躺的根因）
+     * ④ 水印底部条 + 文字靠左 → ⑤ 存 app 打卡目录 + 写 GPS EXIF（地理信息入库，不上画面）。
+     * 系统相册里的原片保持相机输出原样（方向/动态照片/GPS 完整）。
+     */
+    private fun processWaypointPhoto(
+        uri: android.net.Uri, place: String, latLon: Pair<Double, Double>?
+    ): String? = try {
+        val raw = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+        val dir = File(getExternalFilesDir("Pictures"), "waypoints").apply { mkdirs() }
+        val base = "wp_${System.currentTimeMillis()}"
+        // ① 动态视频提取（best-effort）：XMP 里 GCamera:MicroVideoOffset = 文件尾段视频长度
         try {
-            val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            android.graphics.BitmapFactory.decodeFile(f.absolutePath, bounds)
-            var sample = 1
-            while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 2048) sample *= 2
-            val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
-            val bmp = android.graphics.BitmapFactory.decodeFile(f.absolutePath, opts) ?: return
-            val out = if (bmp.isMutable) bmp
-            else bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, true).also { bmp.recycle() }
-            val c = android.graphics.Canvas(out)
-            val ts = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.CHINA).format(java.util.Date())
-            val text = if (place.isBlank()) "Altivane · $ts" else "$place · $ts"
-            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-                color = android.graphics.Color.WHITE
-                textSize = out.width * 0.036f
-                setShadowLayer(4f, 0f, 0f, 0x88000000.toInt())
+            val xmpEnd = findAscii(raw, "</x:xmpmeta>")
+            if (xmpEnd > 0) {
+                val xmp = String(raw, 0, minOf(raw.size, xmpEnd + 400), Charsets.ISO_8859_1)
+                val off = Regex("GCamera:MicroVideoOffset=\"(\\d+)\"")
+                    .find(xmp)?.groupValues?.get(1)?.toIntOrNull()
+                if (off != null && off in 1024..raw.size) {
+                    File(dir, "$base.mp4").writeBytes(raw.copyOfRange(raw.size - off, raw.size))
+                }
             }
-            val lineH = p.textSize * 1.7f
-            val bg = android.graphics.Paint().apply { color = 0x59000000 }
-            c.drawRect(0f, out.height - lineH, out.width.toFloat(), out.height.toFloat(), bg)
-            c.drawText(text, (out.width - p.measureText(text)) / 2f, out.height - lineH * 0.30f, p)
-            java.io.FileOutputStream(f).use {
-                out.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it)
-            }
-            out.recycle()
         } catch (_: Exception) {
         }
+        // ② EXIF 方向
+        val orientation = android.media.ExifInterface(java.io.ByteArrayInputStream(raw))
+            .getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, 1)
+        // ③ 降采样解码 + 转正
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(raw, 0, raw.size, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 2048) sample *= 2
+        val bmp = android.graphics.BitmapFactory.decodeByteArray(
+            raw, 0, raw.size,
+            android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+        ) ?: return null
+        val m = android.graphics.Matrix()
+        when (orientation) {
+            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> m.postRotate(90f)
+            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> m.postRotate(180f)
+            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> m.postRotate(270f)
+            android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> m.postScale(-1f, 1f)
+        }
+        val oriented = android.graphics.Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, m, true)
+        if (oriented != bmp) bmp.recycle()
+        // ④ 水印：底部半透明条 + 左对齐文字
+        val out = if (oriented.isMutable) oriented
+        else oriented.copy(android.graphics.Bitmap.Config.ARGB_8888, true)
+        val c = android.graphics.Canvas(out)
+        val ts = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.CHINA).format(java.util.Date())
+        val text = if (place.isBlank()) "Altivane · $ts" else "$place · $ts"
+        val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.WHITE
+            textSize = out.width * 0.036f
+            setShadowLayer(4f, 0f, 0f, 0x88000000.toInt())
+        }
+        val lineH = p.textSize * 1.7f
+        val pad = out.width * 0.035f
+        val bg = android.graphics.Paint().apply { color = 0x59000000 }
+        c.drawRect(0f, out.height - lineH, out.width.toFloat(), out.height.toFloat(), bg)
+        c.drawText(text, pad, out.height - lineH * 0.30f, p)
+        val f = File(dir, "$base.jpg")
+        java.io.FileOutputStream(f).use {
+            out.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it)
+        }
+        // ⑤ GPS EXIF 写入（纬度/经度 DMS 格式）
+        if (latLon != null) {
+            try {
+                val e2 = android.media.ExifInterface(f.absolutePath)
+                e2.setAttribute(
+                    android.media.ExifInterface.TAG_GPS_LATITUDE,
+                    toDms(latLon.first)
+                )
+                e2.setAttribute(
+                    android.media.ExifInterface.TAG_GPS_LATITUDE_REF,
+                    if (latLon.first >= 0) "N" else "S"
+                )
+                e2.setAttribute(
+                    android.media.ExifInterface.TAG_GPS_LONGITUDE,
+                    toDms(latLon.second)
+                )
+                e2.setAttribute(
+                    android.media.ExifInterface.TAG_GPS_LONGITUDE_REF,
+                    if (latLon.second >= 0) "E" else "W"
+                )
+                e2.saveAttributes()
+            } catch (_: Exception) {
+            }
+        }
+        out.recycle()
+        f.absolutePath
+    } catch (e: Exception) {
+        com.altivane.app.domain.AppLog.e("Wp", "photo process", e)
+        null
+    }
+
+    private fun findAscii(a: ByteArray, s: String): Int {
+        val pat = s.toByteArray(Charsets.ISO_8859_1)
+        outer@ for (i in 0..a.size - pat.size) {
+            for (j in pat.indices) if (a[i + j] != pat[j]) continue@outer
+            return i
+        }
+        return -1
+    }
+
+    private fun toDms(v: Double): String {
+        val d = kotlin.math.abs(v)
+        val deg = d.toInt()
+        val minF = (d - deg) * 60
+        val min = minF.toInt()
+        val sec = (minF - min) * 60
+        return "$deg/1,$min/1,${(sec * 1000).toInt()}/1000"
     }
 
     // 头像：拍照
@@ -229,12 +328,37 @@ class MainActivity : ComponentActivity() {
         permLauncher.launch(neededPermissions())
     }
 
-    /** 徒步拍照打卡：系统相机拍完自动在当前位置写打卡点 */
+    /**
+     * 徒步拍照打卡（v0.8.46）：照片直接写入 MediaStore Pictures/Altivane——
+     * 系统相册立即可见（含动态照片模式输出的原片），app 侧再处理出带水印的工作副本。
+     */
     fun launchCamera() {
-        val dir = File(getExternalFilesDir("Pictures"), "waypoints").apply { mkdirs() }
-        val f = File(dir, "wp_${System.currentTimeMillis()}.jpg")
-        pendingPhoto = f
-        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", f)
+        val loc = (application as RideApp).session.points.value.lastOrNull()
+        pendingMediaLoc = loc?.let { it.lat to it.lon }
+        val values = android.content.ContentValues().apply {
+            put(
+                android.provider.MediaStore.Images.Media.DISPLAY_NAME,
+                "Altivane_wp_${System.currentTimeMillis()}.jpg"
+            )
+            put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Altivane")
+            put(android.provider.MediaStore.Images.Media.IS_PENDING, 1)
+            pendingMediaLoc?.let { ll ->
+                put(android.provider.MediaStore.Images.ImageColumns.LATITUDE, ll.first)
+                put(android.provider.MediaStore.Images.ImageColumns.LONGITUDE, ll.second)
+            }
+        }
+        val uri = contentResolver.insert(
+            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+        ) ?: run {
+            // MediaStore 不可用兜底：私有文件（FileProvider 可读）
+            val dir = File(getExternalFilesDir("Pictures"), "waypoints").apply { mkdirs() }
+            FileProvider.getUriForFile(
+                this, "$packageName.fileprovider",
+                File(dir, "wp_${System.currentTimeMillis()}.jpg")
+            )
+        }
+        pendingMediaUri = uri
         takePicture.launch(uri)
     }
 
@@ -287,6 +411,7 @@ sealed interface Nav {
     data class CardDetail(val type: CardType) : Nav
     data object Routes : Nav
     data class RouteDetail(val idx: Int) : Nav
+    data class LocalRoute(val id: Long) : Nav
     data object EditCards : Nav
     data object Achievements : Nav
     data object YearlyReport : Nav
@@ -406,11 +531,16 @@ fun AppRoot() {
                     onShareRide = { shareFromTrack = n.type == CardType.TRACK; nav = Nav.Share(it) }
                 )
                 Nav.Routes -> com.altivane.app.ui.RoutesScreen(
+                    app,
                     onBack = { nav = if (routesFromRide) Nav.Ride else Nav.Mine },
-                    onOpen = { nav = Nav.RouteDetail(it) }
+                    onOpen = { nav = Nav.RouteDetail(it) },
+                    onOpenLocal = { nav = Nav.LocalRoute(it) }
                 )
                 is Nav.RouteDetail -> com.altivane.app.ui.RouteDetailScreen(
                     n.idx, onBack = { nav = Nav.Routes }
+                )
+                is Nav.LocalRoute -> com.altivane.app.ui.LocalRouteDetailScreen(
+                    app, n.id, onBack = { nav = Nav.Routes }
                 )
                 Nav.EditCards -> com.altivane.app.ui.EditCardsScreen(
                     app, onBack = { nav = Nav.Ride }

@@ -176,6 +176,7 @@ class RideSession {
         }
 
         _points.value = pts + p
+        if (last != null) alignCourse(p, last)
         _state.value = s.copy(
             distanceM = dist,
             movingMs = moving,
@@ -233,11 +234,46 @@ class RideSession {
         if (kind == "M") _coachEvents.tryEmit(CoachEvent(Coach.wpMsgRes(), listOf(label)))
     }
 
+    /**
+     * 指南针 GPS 航向自动对齐（v0.8.46）：磁力计硬/软铁畸变会漂（画 8 字管一阵又漂）。
+     * 移动中（>1.2 m/s）GPS 地面航向是真值——与磁航向的角差按 EMA α=0.05 慢速累积为
+     * courseOff（clamp ±50°），显示航向 = 磁航向 + courseOff。静止/低速不修（bearing 噪声大）。
+     */
+    private var rawHeading = 0f
+    private var courseOff = 0f
+
     fun setHeading(deg: Float, has: Boolean) {
+        rawHeading = deg
+        val corrected = (deg + courseOff + 360f) % 360f
         val s = _state.value
         // 去抖：航向变化 <0.5° 不发新状态（空闲态传感器常驻，避免高频重组）
-        if (s.hasCompass == has && kotlin.math.abs(s.headingDeg - deg) < 0.5f) return
-        _state.value = s.copy(headingDeg = deg, hasCompass = has)
+        if (s.hasCompass == has && kotlin.math.abs(s.headingDeg - corrected) < 0.5f) return
+        _state.value = s.copy(headingDeg = corrected, hasCompass = has)
+    }
+
+    private fun alignCourse(p: RidePoint, last: RidePoint) {
+        if (p.speed < 1.2f) return
+        val dLon = Math.toRadians(p.lon - last.lon)
+        val brg = Math.toDegrees(
+            kotlin.math.atan2(
+                kotlin.math.sin(dLon) * kotlin.math.cos(Math.toRadians(p.lat)),
+                kotlin.math.cos(Math.toRadians(last.lat)) * kotlin.math.sin(Math.toRadians(p.lat)) -
+                        kotlin.math.sin(Math.toRadians(last.lat)) *
+                        kotlin.math.cos(Math.toRadians(p.lat)) * kotlin.math.cos(dLon)
+            )
+        ).toFloat()
+        var d = brg - (rawHeading + courseOff)
+        while (d > 180f) d -= 360f
+        while (d < -180f) d += 360f
+        val newOff = (courseOff + d * 0.05f).coerceIn(-50f, 50f)
+        if (kotlin.math.abs(newOff - courseOff) > 0.05f) {
+            courseOff = newOff
+            // 立即重发修正后的航向（下一传感器事件前 UI/小部件即可看到）
+            val s = _state.value
+            if (s.hasCompass) {
+                _state.value = s.copy(headingDeg = (rawHeading + courseOff + 360f) % 360f)
+            }
+        }
     }
 
     fun setTilt(deg: Float, dir: Float) {

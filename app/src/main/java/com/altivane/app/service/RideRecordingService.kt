@@ -91,11 +91,52 @@ class RideRecordingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startRide()
-            ACTION_PAUSE -> { app.session.pause(); refreshNotif(true) }
-            ACTION_RESUME -> { app.session.resume(); refreshNotif(true) }
+            ACTION_PAUSE -> pauseRide()
+            ACTION_RESUME -> resumeRide()
             ACTION_STOP -> stopRide()
         }
         return START_NOT_STICKY
+    }
+
+    /** 统一启动传感器（暂停恢复/开始共用同一组回调） */
+    private fun startSensors() {
+        val se = sens ?: SensorEngine(this).also { sens = it }
+        se.start(
+            { deg -> app.session.setHeading(deg, true) },
+            { alt -> onBaro(alt) },
+            { },
+            { acc -> app.session.setHeadingAcc(acc) },
+            { tilt, dir -> app.session.setTilt(tilt, dir) }
+        )
+    }
+
+    private fun acquireWakeLock() {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "retii:ride")
+            .apply { acquire(8 * 60 * 60 * 1000L) }
+    }
+
+    /**
+     * 暂停 = 功耗闸（v0.8.46）：停 GPS 请求（芯片降档/关）、停服务侧传感器、释放 WakeLock。
+     * 罗盘桌面卡由 RideApp 常驻引擎继续供数不受影响；恢复时重启并丢弃暂停前的旧定位基准。
+     */
+    private fun pauseRide() {
+        app.session.pause()
+        loc?.stop()
+        sens?.stop()
+        wakeLock?.takeIf { it.isHeld }?.release()
+        com.altivane.app.domain.AppLog.i("Ride", "paused: gps/sensors/wakelock off")
+        refreshNotif(true)
+    }
+
+    private fun resumeRide() {
+        app.session.resume()
+        lastLoc = null // 丢弃暂停前旧基准，恢复首点重新可信门
+        lowAccStreak = 0
+        if (loc?.start { onLoc(it) } != true) loc = null
+        startSensors()
+        acquireWakeLock()
+        refreshNotif(true)
     }
 
     private fun startRide() {
@@ -151,19 +192,8 @@ class RideRecordingService : Service() {
         if (le.start { onLoc(it) }) {
             loc = le
         }
-        val se = SensorEngine(this)
-        se.start(
-            { deg -> app.session.setHeading(deg, true) },
-            { alt -> onBaro(alt) },
-            { },
-            { acc -> app.session.setHeadingAcc(acc) },
-            { tilt, dir -> app.session.setTilt(tilt, dir) }
-        )
-        sens = se
-
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "retii:ride")
-            .apply { acquire(8 * 60 * 60 * 1000L) }
+        startSensors()
+        acquireWakeLock()
     }
 
     private fun onLoc(l: android.location.Location) {

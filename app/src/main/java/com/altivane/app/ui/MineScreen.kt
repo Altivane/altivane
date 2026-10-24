@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,8 +58,10 @@ import androidx.compose.ui.res.stringResource
 import com.altivane.app.R
 import com.altivane.app.RideApp
 import com.altivane.app.data.RideEntity
+import com.altivane.app.domain.Coach
 import com.altivane.app.domain.RoutesData
 import com.altivane.app.domain.SportType
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 /**
@@ -188,9 +192,14 @@ private fun lastKnownLoc(ctx: android.content.Context): android.location.Locatio
     return null
 }
 
-/** 我的路线：内置经典线路 + 距您距离（热门路线预留区块） */
+/** 我的路线：内置经典线路 + 本地保存的运动路线 */
 @Composable
-fun RoutesScreen(onBack: () -> Unit, onOpen: (Int) -> Unit) {
+fun RoutesScreen(
+    app: RideApp,
+    onBack: () -> Unit,
+    onOpen: (Int) -> Unit,
+    onOpenLocal: (Long) -> Unit
+) {
     val ctx = LocalContext.current
     val loc = remember { lastKnownLoc(ctx) }
 
@@ -253,27 +262,88 @@ fun RoutesScreen(onBack: () -> Unit, onOpen: (Int) -> Unit) {
                     }
                 }
             }
-            // 热门路线预留区块
+            // 本地路线：运动轨迹「存为我的路线」保存的线路（v0.8.46）
             item {
+                val lrs by app.db.dao().localRoutes().collectAsState(initial = emptyList())
+                var delId by remember { mutableStateOf<Long?>(null) }
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .glassCard(isDark(), null)
                         .padding(14.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(stringResource(R.string.local_routes), style = MaterialTheme.typography.titleMedium)
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                stringResource(R.string.local_routes),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(Modifier.weight(1f))
+                            Text(
+                                "${lrs.size}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = AvColors.cyan
+                            )
+                        }
+                        if (lrs.isEmpty()) {
                             Spacer(Modifier.height(3.dp))
                             Text(
                                 stringResource(R.string.routes_soon),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        } else {
+                            lrs.take(10).forEach { lr ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onOpenLocal(lr.id) }
+                                        .padding(top = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            lr.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            "%.2f km · %s · ↑%.0f m".format(
+                                                lr.distKm, Coach.fmtDur(lr.durS * 1000L), lr.gainM
+                                            ),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    IconButton(onClick = { delId = lr.id }) {
+                                        Icon(
+                                            androidx.compose.material.icons.Icons.Filled.Delete, null,
+                                            Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        Text("soon", style = MaterialTheme.typography.labelMedium,
-                            color = AvColors.cyan)
                     }
+                }
+                val scope = androidx.compose.runtime.rememberCoroutineScope()
+                delId?.let { id ->
+                    AlertDialog(
+                        onDismissRequest = { delId = null },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                delId = null
+                                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                    app.db.dao().deleteLocalRoute(id)
+                                }
+                            }) { Text(stringResource(R.string.btn_delete)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { delId = null }) { Text(stringResource(R.string.btn_cancel)) }
+                        },
+                        title = { Text(stringResource(R.string.lr_delete_confirm)) }
+                    )
                 }
             }
         }
@@ -384,6 +454,111 @@ fun RouteDetailScreen(idx: Int, onBack: () -> Unit) {
                     style = MaterialTheme.typography.labelMedium,
                     color = AvColors.yellow
                 )
+            }
+        }
+    }
+}
+
+/** 本地路线详情（存为我的路线）：地图 + 海拔剖面 + 统计 + 删除 */
+@Composable
+fun LocalRouteDetailScreen(app: RideApp, id: Long, onBack: () -> Unit) {
+    var lr by remember { mutableStateOf<com.altivane.app.data.LocalRouteEntity?>(null) }
+    LaunchedEffect(id) {
+        lr = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            app.db.dao().localRoute(id)
+        }
+    }
+    val r = lr ?: return
+    val dim = MaterialTheme.colorScheme.onSurfaceVariant
+
+    // ptsJson [[lat,lon,ele],...] → 轨迹点
+    val pts = remember(r) {
+        try {
+            val arr = org.json.JSONArray(r.ptsJson)
+            (0 until arr.length()).map { i ->
+                val a = arr.getJSONArray(i)
+                Triple(a.getDouble(0), a.getDouble(1), a.getDouble(2))
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding()
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, null,
+                    tint = MaterialTheme.colorScheme.onBackground)
+            }
+            Column {
+                Text(r.name, style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground)
+                Text(
+                    java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.CHINA)
+                        .format(java.util.Date(r.dateMs)),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        val mapH = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 2 / 3
+        MapTrackView(
+            pts = pts.map { TrackPt(it.first, it.second) },
+            speeds = emptyList(),
+            maxSpeed = 0.0,
+            waypoints = emptyList(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(mapH.dp)
+                .clip(RoundedCornerShape(18.dp))
+        )
+
+        GlassCard(Modifier.height(90.dp), accent = AvColors.orange) {
+            Column(Modifier.fillMaxSize()) {
+                Text(
+                    if (pts.size >= 2)
+                        stringResource(
+                            R.string.profile_fmt,
+                            pts.first().third.toInt(),
+                            pts.maxOf { it.third }.toInt()
+                        )
+                    else "",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = dim
+                )
+                Sparkline(
+                    pts.map { it.third }, AvColors.orange,
+                    Modifier.fillMaxWidth().weight(1f).padding(top = 4.dp)
+                )
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                "%.2f".format(r.distKm) to stringResource(R.string.unit_km_dist),
+                Coach.fmtDur(r.durS * 1000L) to stringResource(R.string.card_duration),
+                "%.0f".format(r.gainM) to stringResource(R.string.unit_m_climb)
+            ).forEach { (v, l) ->
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .glassCard(isDark(), null)
+                        .padding(vertical = 12.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(v, fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onBackground)
+                        Text(l, style = MaterialTheme.typography.labelMedium, color = dim)
+                    }
+                }
             }
         }
     }
