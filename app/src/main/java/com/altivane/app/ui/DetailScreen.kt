@@ -83,6 +83,8 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
     var prev by remember { mutableStateOf<RideEntity?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
     var zoomPath by remember { mutableStateOf<String?>(null) }
+    var showSaveDlg by remember { mutableStateOf(false) }
+    var saveName by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     val dark = isDark()
@@ -221,11 +223,14 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     StatCard(stringResource(R.string.lbl_climb), "%.0f".format(r.elevGainM), "m", AvColors.orange, Modifier.weight(1f).height(statH))
                     if (sport == SportType.RIDE) {
-                        // 最慢公里：全程逐公里配速中最慢的一段
+                        // 最慢公里：骑行口径用 km/h（pace 反算），不混徒步 min/km
                         StatCard(
                             stringResource(R.string.lbl_slowest_km),
-                            remember(rpts) { RideStats.kmPaces(rpts).maxOrNull()?.let { Coach.paceText(it) } ?: "--" },
-                            "min/km", AvColors.violet, Modifier.weight(1f).height(statH)
+                            remember(rpts) {
+                                RideStats.kmPaces(rpts).maxOrNull()
+                                    ?.let { if (it > 0.01) "%.1f".format(60.0 / it) else "--" } ?: "--"
+                            },
+                            "km/h", AvColors.violet, Modifier.weight(1f).height(statH)
                         )
                     } else {
                         // 步数：里程 ÷ 0.72 m（成人通用步长估算，仅徒步）
@@ -445,35 +450,16 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                         .height(50.dp)
                         .glassCard(dark, AvColors.green)
                         .clickable {
-                            scope.launch(Dispatchers.IO) {
-                                try {
-                                    val step = maxOf(1, pts.size / 300)
-                                    val arr = org.json.JSONArray()
-                                    for (i in pts.indices step step) {
-                                        arr.put(
-                                            org.json.JSONArray()
-                                                .put(pts[i].lat).put(pts[i].lon).put(pts[i].ele)
-                                        )
-                                    }
-                                    app.db.dao().insertLocalRoute(
-                                        com.altivane.app.data.LocalRouteEntity(
-                                            name = SimpleDateFormat("MM.dd HH:mm", Locale.CHINA)
-                                                .format(Date(r.startTime)),
-                                            dateMs = r.startTime,
-                                            sport = r.sportType,
-                                            distKm = r.distanceM / 1000.0,
-                                            gainM = r.elevGainM,
-                                            durS = r.movingS,
-                                            ptsJson = arr.toString()
-                                        )
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            ctx, ctx.getString(R.string.lr_saved), Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                } catch (e: Exception) {
-                                    com.altivane.app.domain.AppLog.e("Route", "save local route", e)
+                            // 先自动识别默认名（三山五岳最近邻 → 逆地理 → 时间戳），再弹命名对话框
+                            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                val mtn = matchMountainName(pts)
+                                val anchor = pts.firstOrNull()
+                                val place = mtn ?: (anchor?.let { geoPlaceName(it.lat, it.lon) } ?: "")
+                                val fallback = SimpleDateFormat("MM.dd HH:mm", Locale.CHINA)
+                                    .format(Date(r.startTime))
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    saveName = place.ifBlank { fallback }
+                                    showSaveDlg = true
                                 }
                             }
                         },
@@ -493,6 +479,66 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
     // 打卡照片全屏查看（EXIF 转正 / 按比例占满 / 动态播放 / 相册查看）
     zoomPath?.let { p ->
         PhotoZoomDialog(p) { zoomPath = null }
+    }
+
+    // 存为我的路线：命名对话框（预填自动识别名，可改）
+    if (showSaveDlg) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showSaveDlg = false },
+            title = { Text(stringResource(R.string.lr_save)) },
+            text = {
+                androidx.compose.material3.OutlinedTextField(
+                    value = saveName,
+                    onValueChange = { saveName = it },
+                    label = { Text(stringResource(R.string.lr_name_label)) },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showSaveDlg = false
+                    val rideNow = ride ?: return@TextButton
+                    val name = saveName.ifBlank {
+                        SimpleDateFormat("MM.dd HH:mm", Locale.CHINA).format(Date(rideNow.startTime))
+                    }
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val step = maxOf(1, pts.size / 300)
+                            val arr = org.json.JSONArray()
+                            for (i in pts.indices step step) {
+                                arr.put(
+                                    org.json.JSONArray()
+                                        .put(pts[i].lat).put(pts[i].lon).put(pts[i].ele)
+                                )
+                            }
+                            app.db.dao().insertLocalRoute(
+                                com.altivane.app.data.LocalRouteEntity(
+                                    name = name,
+                                    dateMs = rideNow.startTime,
+                                    sport = rideNow.sportType,
+                                    distKm = rideNow.distanceM / 1000.0,
+                                    gainM = rideNow.elevGainM,
+                                    durS = rideNow.movingS,
+                                    ptsJson = arr.toString()
+                                )
+                            )
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    ctx, ctx.getString(R.string.lr_saved), Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } catch (e: Exception) {
+                            com.altivane.app.domain.AppLog.e("Route", "save local route", e)
+                        }
+                    }
+                }) { Text(stringResource(R.string.lr_ok)) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showSaveDlg = false }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
     }
 
     if (confirmDelete) {
@@ -598,3 +644,57 @@ fun shareFile(ctx: android.content.Context, f: File, mime: String) {
         com.altivane.app.domain.AppLog.e("Share", "shareFile ${f.name} failed", e)
     }
 }
+
+/** 存为我的路线：轨迹抽样点与内置三山五岳节点最近邻匹配，<2.5km 命中返回「山名·线名」 */
+private fun matchMountainName(pts: List<com.altivane.app.data.PointEntity>): String? {
+    if (pts.isEmpty()) return null
+    val step = maxOf(1, pts.size / 50)
+    var bestD = Double.MAX_VALUE
+    var bestName: String? = null
+    for (r in com.altivane.app.domain.RoutesData.all) {
+        for (line in r.lines) {
+            for (p in line.pts) {
+                var i = 0
+                while (i < pts.size) {
+                    val q = pts[i]
+                    val dLat = q.lat - p.lat
+                    val dLon = (q.lon - p.lon) * Math.cos(Math.toRadians((q.lat + p.lat) / 2))
+                    val d = Math.sqrt(dLat * dLat + dLon * dLon) * 111_320.0
+                    if (d < bestD) {
+                        bestD = d
+                        bestName = "${r.name}·${line.name}"
+                    }
+                    i += step
+                }
+            }
+        }
+    }
+    return if (bestD < 2500.0) bestName else null
+}
+
+/** Nominatim 逆地理取地名（zoom=14 城镇级，POI→城区→城镇兜底）；失败返回空串 */
+private suspend fun geoPlaceName(lat: Double, lon: Double): String =
+    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val url = java.net.URL(
+                "https://nominatim.openstreetmap.org/reverse?format=jsonv2" +
+                        "&lat=$lat&lon=$lon&zoom=14&accept-language=zh-CN&addressdetails=1"
+            )
+            val conn = url.openConnection() as java.net.HttpURLConnection
+            conn.connectTimeout = 3000
+            conn.readTimeout = 3000
+            conn.setRequestProperty("User-Agent", "Altivane/0.8.47 (map query)")
+            val txt = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            val o = org.json.JSONObject(txt)
+            val name = o.optString("name")
+            if (name.isNotBlank()) name
+            else {
+                val addr = o.optJSONObject("address")
+                listOf("suburb", "town", "village", "county", "city_district", "city")
+                    .firstNotNullOfOrNull { k -> addr?.optString(k)?.takeIf { v -> v.isNotBlank() } } ?: ""
+            }
+        } catch (_: Exception) {
+            ""
+        }
+    }

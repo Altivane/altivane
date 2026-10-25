@@ -318,6 +318,9 @@ fun CardDetailScreen(
                     if (viewPts.size >= 2) {
                         // ② 4 格数据条（里程/时长/均速或配速/爬升）
                         val idle = s.phase == Phase.IDLE
+                        // 口径按数据记录的运动类型：空闲查历史用落库 sportType，不用当前选择
+                        val isRide = if (idle && lastRide != null)
+                            lastRide!!.sportType == "RIDE" else s.sport == SportType.RIDE
                         val km = if (idle && lastRide != null) lastRide!!.distanceM / 1000.0 else s.distanceM / 1000.0
                         val dur = if (idle && lastRide != null) lastRide!!.movingS * 1000L else s.movingMs
                         val gain = if (idle && lastRide != null) lastRide!!.elevGainM
@@ -326,10 +329,10 @@ fun CardDetailScreen(
                             TrackStatCell("%.2f".format(km), stringResource(R.string.unit_km_dist), null, Modifier.weight(1f))
                             TrackStatCell(Coach.fmtDur(dur), stringResource(R.string.card_duration), null, Modifier.weight(1f))
                             TrackStatCell(
-                                if (s.sport == SportType.RIDE) "%.1f".format(
+                                if (isRide) "%.1f".format(
                                     if (dur > 0) km / (dur / 3600000.0) else 0.0
                                 ) else Coach.paceText(if (dur > 0 && km > 0) dur / 60000.0 / km else 0.0),
-                                if (s.sport == SportType.RIDE) stringResource(R.string.unit_avg_kmh) else stringResource(R.string.unit_pace_minkm),
+                                if (isRide) stringResource(R.string.unit_avg_kmh) else stringResource(R.string.unit_pace_minkm),
                                 null, Modifier.weight(1f)
                             )
                             TrackStatCell("%.0f".format(gain), stringResource(R.string.unit_m_climb), AvColors.orange, Modifier.weight(1f))
@@ -665,19 +668,23 @@ private fun DetailSummary(
             stringResource(R.string.lbl_fastest_km) to (fastest?.let { Coach.paceText(it) } ?: "--")
         )
         CardType.DISTANCE -> {
-            // 步数换算仅徒步有意义（骑行不显示）：成人通用步长 0.72 m 估算
+            // 口径按运动类型：骑行=距离/均速/峰值时速/移动时间；徒步=距离/均速/移动时间/步数
             val sportName = if (idle) ride?.sportType ?: "HIKE" else s.sport.name
             val base = listOf(
                 stringResource(R.string.card_distance) to "%.2f km".format(totalKm),
                 stringResource(R.string.lbl_avg_speed) to "%.1f km/h".format(avgKmh),
                 stringResource(R.string.lbl_moving) to Coach.fmtDur(movingMs)
             )
-            if (sportName != "RIDE") base + (
+            if (sportName == "RIDE") base + (
+                stringResource(R.string.lbl_peak_speed) to "%.1f km/h".format(
+                    if (idle) (ride?.maxKmh ?: 0.0) else s.maxKmh
+                )
+                )
+            else base + (
                 stringResource(R.string.lbl_steps) to (
                     if (totalKm > 0.05) stringResource(R.string.unit_steps_fmt, (totalKm * 1000 / 0.72).toInt()) else "--"
                     )
                 )
-            else base
         }
         CardType.DURATION -> {
             val total = if (pts.size >= 2) pts.last().t - pts.first().t else 0L

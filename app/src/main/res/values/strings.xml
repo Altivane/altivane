@@ -362,6 +362,8 @@
     <string name="routes_soon">暂无保存的路线：运动结束后在详情页点「存为我的路线」</string>
     <string name="lr_save">存为我的路线</string>
     <string name="lr_saved">已保存到 我的 · 路线</string>
+    <string name="lr_name_label">路线名称</string>
+    <string name="lr_ok">保存</string>
     <string name="lr_delete_confirm">删除这条路线？</string>
     <string name="photo_live">动态</string>
     <string name="photo_open_gallery">在系统相册查看</string>

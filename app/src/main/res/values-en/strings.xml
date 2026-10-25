@@ -348,6 +348,8 @@
     <string name="routes_soon">No saved routes yet: finish a workout and tap \"Save as My Route\" on its detail page</string>
     <string name="lr_save">Save as My Route</string>
     <string name="lr_saved">Saved to Me · Routes</string>
+    <string name="lr_name_label">Route name</string>
+    <string name="lr_ok">Save</string>
     <string name="lr_delete_confirm">Delete this route?</string>
     <string name="photo_live">Live</string>
     <string name="photo_open_gallery">Open in Gallery</string>

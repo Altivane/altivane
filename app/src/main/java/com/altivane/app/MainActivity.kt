@@ -442,6 +442,7 @@ fun AppRoot() {
             is Nav.Share -> if (shareFromTrack) Nav.CardDetail(CardType.TRACK) else Nav.Detail(n.id)
             is Nav.Detail -> Nav.History
             is Nav.RouteDetail -> Nav.Routes
+            is Nav.LocalRoute -> Nav.Routes
             is Nav.CardDetail -> Nav.Ride
             Nav.Routes -> if (routesFromRide) Nav.Ride else Nav.Mine
             Nav.History, Nav.More -> Nav.Mine
