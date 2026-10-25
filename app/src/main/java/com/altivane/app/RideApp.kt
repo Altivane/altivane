@@ -43,7 +43,7 @@ class RideApp : Application() {
         com.altivane.app.ui.AppTheme.init(this)
         com.altivane.app.ui.ProfileStore.init(this)
         db = Room.databaseBuilder(this, RideDb::class.java, "ride.db")
-            .addMigrations(RideDb.MIGRATION_1_2, RideDb.MIGRATION_2_3, RideDb.MIGRATION_3_4)
+            .addMigrations(RideDb.MIGRATION_1_2, RideDb.MIGRATION_2_3, RideDb.MIGRATION_3_4, RideDb.MIGRATION_4_5)
             .build()
         ble = BleManager(this)
         // 根因修复：此前 BLE 心率/踏频只进 BleManager 自身 Flow（仅设置页收集），

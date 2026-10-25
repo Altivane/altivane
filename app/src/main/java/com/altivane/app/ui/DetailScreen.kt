@@ -519,7 +519,8 @@ fun DetailScreen(app: RideApp, id: Long, onBack: () -> Unit, onShare: () -> Unit
                                     distKm = rideNow.distanceM / 1000.0,
                                     gainM = rideNow.elevGainM,
                                     durS = rideNow.movingS,
-                                    ptsJson = arr.toString()
+                                    ptsJson = arr.toString(),
+                                    sortAt = System.currentTimeMillis()
                                 )
                             )
                             withContext(Dispatchers.Main) {

@@ -5,7 +5,7 @@
     android:targetCellWidth="2"
     android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:updatePeriodMillis="0"
     android:previewLayout="@layout/widget_track"
     android:initialLayout="@layout/widget_track" />

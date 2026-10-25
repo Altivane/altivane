@@ -15,8 +15,8 @@ android {
         applicationId = "com.altivane.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 56
-        versionName = "0.8.47"
+        versionCode = 57
+        versionName = "0.8.48"
         // 只留 arm64：so 体积主因（华为机 arm64）
         ndk { abiFilters += "arm64-v8a" }
     }

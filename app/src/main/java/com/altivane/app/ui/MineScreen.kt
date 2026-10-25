@@ -202,6 +202,8 @@ fun RoutesScreen(
 ) {
     val ctx = LocalContext.current
     val loc = remember { lastKnownLoc(ctx) }
+    // 本地路线（与三山五岳平级，v0.8.48）：按 sortAt 降序 = 最近保存/查看过的排最前
+    val lrs by app.db.dao().localRoutes().collectAsState(initial = emptyList())
 
     Column(
         Modifier
@@ -227,6 +229,64 @@ fun RoutesScreen(
             }
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // ① 本地路线：与三山五岳同款卡片样式，信息四段对齐（距您 · 日期 · 爬升 · 里程）
+            items(lrs, key = { "lr${it.id}" }) { lr ->
+                val p0 = remember(lr.id) {
+                    try {
+                        val a = org.json.JSONArray(lr.ptsJson)
+                        if (a.length() > 0) {
+                            val x = a.getJSONArray(0)
+                            x.getDouble(0) to x.getDouble(1)
+                        } else null
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                val distTxt = if (p0 != null) loc?.let {
+                    val d = com.altivane.app.domain.RideStats.haversine(
+                        it.latitude, it.longitude, p0.first, p0.second
+                    )
+                    if (d >= 1000.0) stringResource(R.string.dist_km_fmt, d / 1000.0)
+                    else stringResource(R.string.dist_m_fmt, d)
+                } ?: stringResource(R.string.dist_none)
+                else stringResource(R.string.dist_none)
+                val dateTxt = remember(lr.dateMs) {
+                    java.text.SimpleDateFormat("MM-dd", java.util.Locale.CHINA)
+                        .format(java.util.Date(lr.dateMs))
+                }
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .glassCard(isDark(), null)
+                        .clickable { onOpenLocal(lr.id) }
+                        .padding(14.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(lr.name, style = MaterialTheme.typography.titleMedium,
+                                    fontSize = 18.sp)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    stringResource(
+                                        if (lr.sport == "RIDE") R.string.sport_ride else R.string.sport_hike
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = AvColors.cyan
+                                )
+                            }
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                "$distTxt · $dateTxt · ↑%.0f m · %.2f km".format(lr.gainM, lr.distKm),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            // ② 内置三山五岳经典线路
             itemsIndexed(RoutesData.all) { idx, r ->
                 val distTxt = loc?.let {
                     val d = com.altivane.app.domain.RideStats.haversine(
@@ -260,90 +320,6 @@ fun RoutesScreen(
                         }
                         Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                }
-            }
-            // 本地路线：运动轨迹「存为我的路线」保存的线路（v0.8.46）
-            item {
-                val lrs by app.db.dao().localRoutes().collectAsState(initial = emptyList())
-                var delId by remember { mutableStateOf<Long?>(null) }
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .glassCard(isDark(), null)
-                        .padding(14.dp)
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                stringResource(R.string.local_routes),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(Modifier.weight(1f))
-                            Text(
-                                "${lrs.size}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = AvColors.cyan
-                            )
-                        }
-                        if (lrs.isEmpty()) {
-                            Spacer(Modifier.height(3.dp))
-                            Text(
-                                stringResource(R.string.routes_soon),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            lrs.take(10).forEach { lr ->
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onOpenLocal(lr.id) }
-                                        .padding(top = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(
-                                            lr.name,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                        Text(
-                                            "%.2f km · %s · ↑%.0f m".format(
-                                                lr.distKm, Coach.fmtDur(lr.durS * 1000L), lr.gainM
-                                            ),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    IconButton(onClick = { delId = lr.id }) {
-                                        Icon(
-                                            androidx.compose.material.icons.Icons.Filled.Delete, null,
-                                            Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                val scope = androidx.compose.runtime.rememberCoroutineScope()
-                delId?.let { id ->
-                    AlertDialog(
-                        onDismissRequest = { delId = null },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                delId = null
-                                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                                    app.db.dao().deleteLocalRoute(id)
-                                }
-                            }) { Text(stringResource(R.string.btn_delete)) }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { delId = null }) { Text(stringResource(R.string.btn_cancel)) }
-                        },
-                        title = { Text(stringResource(R.string.lr_delete_confirm)) }
-                    )
                 }
             }
         }
@@ -463,8 +439,11 @@ fun RouteDetailScreen(idx: Int, onBack: () -> Unit) {
 @Composable
 fun LocalRouteDetailScreen(app: RideApp, id: Long, onBack: () -> Unit) {
     var lr by remember { mutableStateOf<com.altivane.app.data.LocalRouteEntity?>(null) }
+    var delConfirm by remember { mutableStateOf(false) }
     LaunchedEffect(id) {
         lr = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            // 打开即刷新使用排序键：最近去过的在路线列表排最前
+            app.db.dao().touchLocalRoute(id, System.currentTimeMillis())
             app.db.dao().localRoute(id)
         }
     }
@@ -497,7 +476,7 @@ fun LocalRouteDetailScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, null,
                     tint = MaterialTheme.colorScheme.onBackground)
             }
-            Column {
+            Column(Modifier.weight(1f)) {
                 Text(r.name, style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground)
                 Text(
@@ -505,6 +484,14 @@ fun LocalRouteDetailScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                         .format(java.util.Date(r.dateMs)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            // 删除（列表卡片与三山五岳同款无按钮，删除入口收进详情页）
+            IconButton(onClick = { delConfirm = true }) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.Delete, null,
+                    Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -561,6 +548,26 @@ fun LocalRouteDetailScreen(app: RideApp, id: Long, onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (delConfirm) {
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        AlertDialog(
+            onDismissRequest = { delConfirm = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    delConfirm = false
+                    scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        app.db.dao().deleteLocalRoute(id)
+                    }
+                    onBack()
+                }) { Text(stringResource(R.string.btn_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { delConfirm = false }) { Text(stringResource(R.string.btn_cancel)) }
+            },
+            title = { Text(stringResource(R.string.lr_delete_confirm)) }
+        )
     }
 }
 

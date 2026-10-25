@@ -81,9 +81,12 @@ class RideRecordingService : Service() {
         app = application as RideApp
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26) {
-            nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_LOW)
+            val ch = NotificationChannel(
+                CHANNEL_ID, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_LOW
             )
+            // 锁屏可见（灵动岛/焦点通知的 ROM 读取 ongoing 通知，锁屏隐藏则不显示）
+            ch.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            nm.createNotificationChannel(ch)
         }
         tts = CoachTts(this)
     }
@@ -380,6 +383,8 @@ class RideRecordingService : Service() {
             .setContentTitle(title)                 // Promoted 资格：必须有 contentTitle
             .setContentText(text)                   // Promoted 卡展示 title+text+进度条
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            // 健身运动类：ROM 的焦点通知/灵动岛按 category+ongoing 识别运动卡片
+            .setCategory(NotificationCompat.CATEGORY_WORKOUT)
             .setContentIntent(pi)
             .setOngoing(true)                       // Promoted 资格
             .setOnlyAlertOnce(true)

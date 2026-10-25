@@ -59,7 +59,9 @@ data class LocalRouteEntity(
     val distKm: Double,
     val gainM: Double,
     val durS: Int,
-    val ptsJson: String
+    val ptsJson: String,
+    /** 使用排序键：保存时刻，打开详情时刷新（最近保存/去过的排最前） */
+    val sortAt: Long = 0
 )
 
 @Dao
@@ -113,11 +115,14 @@ interface RideDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLocalRoute(r: LocalRouteEntity): Long
 
-    @Query("SELECT * FROM local_routes ORDER BY dateMs DESC")
+    @Query("SELECT * FROM local_routes ORDER BY sortAt DESC, dateMs DESC")
     fun localRoutes(): Flow<List<LocalRouteEntity>>
 
     @Query("SELECT * FROM local_routes WHERE id = :id")
     suspend fun localRoute(id: Long): LocalRouteEntity?
+
+    @Query("UPDATE local_routes SET sortAt = :sortAt WHERE id = :id")
+    suspend fun touchLocalRoute(id: Long, sortAt: Long)
 
     @Query("DELETE FROM local_routes WHERE id = :id")
     suspend fun deleteLocalRoute(id: Long)
@@ -134,7 +139,7 @@ data class RideBound(
 
 @Database(
     entities = [RideEntity::class, PointEntity::class, WaypointEntity::class, LocalRouteEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class RideDb : RoomDatabase() {
@@ -170,6 +175,13 @@ abstract class RideDb : RoomDatabase() {
                             "ptsJson TEXT NOT NULL)"
                 )
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_local_routes_dateMs ON local_routes (dateMs)")
+            }
+        }
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE local_routes ADD COLUMN sortAt INTEGER NOT NULL DEFAULT 0")
+                // 存量数据：用 dateMs 填充，保持相对新旧
+                db.execSQL("UPDATE local_routes SET sortAt = dateMs")
             }
         }
     }

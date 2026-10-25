@@ -5,7 +5,7 @@
     android:targetCellWidth="2"
     android:targetCellHeight="1"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:updatePeriodMillis="0"
     android:previewLayout="@layout/widget_tile_speed"
     android:initialLayout="@layout/widget_tile_speed" />
